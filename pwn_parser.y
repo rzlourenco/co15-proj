@@ -51,7 +51,7 @@ list : stmt	     { $$ = new cdk::sequence_node(LINE, $1); }
 	   ;
 
 stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1); }
- 	   | tPRINT expr ';'                  { $$ = new pwn::print_node(LINE, $2); }
+ 	   | tPRINT expr ';'                  { $$ = new pwn::print_node(LINE, $2, false); }
      | tREAD lval ';'                   { $$ = new pwn::read_node(LINE, $2); }
      | tWHILE '(' expr ')' stmt         { $$ = new cdk::while_node(LINE, $3, $5); }
      | tIF '(' expr ')' stmt %prec tIFX { $$ = new cdk::if_node(LINE, $3, $5); }
