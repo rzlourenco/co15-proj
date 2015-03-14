@@ -32,6 +32,7 @@ class and_node;
 class program_node; 
 class lvalue_node; 
 class evaluation_node; 
+class not_node; 
 class read_node; 
 class or_node; 
 class rvalue_node; 
@@ -86,6 +87,7 @@ class assignment_node;
 #include "ast/program_node.h"
 #include "ast/lvalue_node.h"
 #include "ast/evaluation_node.h"
+#include "ast/not_node.h"
 #include "ast/read_node.h"
 #include "ast/or_node.h"
 #include "ast/rvalue_node.h"

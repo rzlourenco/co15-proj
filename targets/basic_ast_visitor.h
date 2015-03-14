@@ -77,6 +77,8 @@ public:
   virtual void do_eq_node(cdk::eq_node * const node, int lvl) = 0;
   virtual void do_or_node(pwn::or_node * const node, int lvl) = 0;
   virtual void do_and_node(pwn::and_node * const node, int lvl) = 0;
+  virtual void do_not_node(pwn::not_node * const node, int lvl) = 0;
+
 
 public:
   virtual void do_while_node(cdk::while_node * const node, int lvl) = 0;
