@@ -1,5 +1,5 @@
-#ifndef __PWN_ORNODE_H__
-#define __PWN_ORNODE_H__
+#ifndef __PWN_ANDNODE_H__
+#define __PWN_ANDNODE_H__
 
 #include <cdk/ast/binary_expression_node.h>
 
