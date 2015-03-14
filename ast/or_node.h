@@ -3,12 +3,12 @@
 
 #include <cdk/ast/binary_expression_node.h>
 
-namespace cdk {
+namespace pwn {
 
   /**
    * Class for describing the or ('|') operator
    */
-  class or_node: public binary_expression_node {
+  class or_node: public cdk::binary_expression_node {
   public:
     /**
      * @param lineno source code line number for this node
@@ -16,7 +16,7 @@ namespace cdk {
      * @param right second operand
      */
     inline or_node(int lineno, expression_node *left, expression_node *right) :
-        binary_expression_node(lineno, left, right) {
+        cdk::binary_expression_node(lineno, left, right) {
     }
 
     /**

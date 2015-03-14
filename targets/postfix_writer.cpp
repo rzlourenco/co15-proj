@@ -111,6 +111,9 @@ void pwn::postfix_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
   node->right()->accept(this, lvl);
   _pf.EQ();
 }
+void pwn::postfix_writer::do_or_node(pwn::or_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 

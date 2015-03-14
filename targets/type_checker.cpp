@@ -83,6 +83,9 @@ void pwn::type_checker::do_ne_node(cdk::ne_node * const node, int lvl) {
 void pwn::type_checker::do_eq_node(cdk::eq_node * const node, int lvl) {
   processBinaryExpression(node, lvl);
 }
+void pwn::type_checker::do_or_node(pwn::or_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 
