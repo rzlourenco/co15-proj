@@ -92,6 +92,9 @@ void pwn::type_checker::do_and_node(pwn::and_node * const node, int lvl) {
 void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 

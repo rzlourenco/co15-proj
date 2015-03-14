@@ -120,6 +120,9 @@ void pwn::postfix_writer::do_and_node(pwn::and_node * const node, int lvl) {
 void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 
