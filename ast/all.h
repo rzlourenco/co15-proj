@@ -28,6 +28,7 @@ namespace cdk {
 
 namespace pwn {
 class print_node; 
+class and_node; 
 class program_node; 
 class lvalue_node; 
 class evaluation_node; 
@@ -81,6 +82,7 @@ class assignment_node;
 //---------------------------------------------------------------------------
 
 #include "ast/print_node.h"
+#include "ast/and_node.h"
 #include "ast/program_node.h"
 #include "ast/lvalue_node.h"
 #include "ast/evaluation_node.h"

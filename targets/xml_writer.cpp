@@ -82,6 +82,9 @@ void pwn::xml_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
 void pwn::xml_writer::do_or_node(pwn::or_node * const node, int lvl) {
   /* to implement */
 }
+void pwn::xml_writer::do_and_node(pwn::and_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 
