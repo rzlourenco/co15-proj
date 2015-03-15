@@ -132,6 +132,9 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
 void pwn::postfix_writer::do_declaration_node(pwn::declaration_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::postfix_writer::do_function_node(pwn::function_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 
