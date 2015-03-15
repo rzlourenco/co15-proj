@@ -83,6 +83,7 @@ public:
   virtual void do_variable_node(pwn::variable_node * const node, int lvl) = 0;
   virtual void do_declaration_node(pwn::declaration_node * const node, int lvl) = 0;
   virtual void do_function_node(pwn::function_node * const node, int lvl) = 0;
+  virtual void do_function_call_node(pwn::function_call_node * const node, int lvl) = 0;
 
 
 public:

@@ -103,6 +103,9 @@ void pwn::xml_writer::do_declaration_node(pwn::declaration_node * const node, in
 void pwn::xml_writer::do_function_node(pwn::function_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::xml_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 
