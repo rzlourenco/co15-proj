@@ -79,6 +79,7 @@ public:
   virtual void do_and_node(pwn::and_node * const node, int lvl) = 0;
   virtual void do_not_node(pwn::not_node * const node, int lvl) = 0;
   virtual void do_index_node(pwn::index_node * const node, int lvl) = 0;
+  virtual void do_alloc_node(pwn::alloc_node * const node, int lvl) = 0;
 
 
 public:

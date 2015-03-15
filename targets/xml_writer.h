@@ -79,6 +79,7 @@ namespace pwn {
     void do_and_node(pwn::and_node * const node, int lvl);
     void do_not_node(pwn::not_node * const node, int lvl);
     void do_index_node(pwn::index_node * const node, int lvl);
+    void do_alloc_node(pwn::alloc_node * const node, int lvl);
 
   public:
     void do_while_node(cdk::while_node * const node, int lvl);
