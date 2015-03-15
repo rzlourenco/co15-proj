@@ -67,6 +67,7 @@ namespace pwn {
     void do_index_node(pwn::index_node * const node, int lvl);
     void do_alloc_node(pwn::alloc_node * const node, int lvl);
     void do_variable_node(pwn::variable_node * const node, int lvl);
+    void do_declaration_node(pwn::declaration_node * const node, int lvl);
 
 
   public:
