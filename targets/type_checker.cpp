@@ -116,6 +116,9 @@ void pwn::type_checker::do_addressof_node(pwn::addressof_node * const node, int 
 void pwn::type_checker::do_return_node(pwn::return_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::type_checker::do_next_node(pwn::next_node * const node, int lvl) {
+  /* implement me*/
+}
 
 
 //---------------------------------------------------------------------------

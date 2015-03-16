@@ -112,6 +112,9 @@ void pwn::xml_writer::do_addressof_node(pwn::addressof_node * const node, int lv
 void pwn::xml_writer::do_return_node(pwn::return_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::xml_writer::do_next_node(pwn::next_node * const node, int lvl) {
+  /* implement me*/
+}
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_rvalue_node(pwn::rvalue_node * const node, int lvl) {
