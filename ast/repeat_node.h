@@ -2,7 +2,7 @@
 #define __PWN_REPEATNODE_H__
 
 #include <cdk/ast/basic_node.h>
-#include <cdk/sequence_node.h>
+#include <cdk/ast/sequence_node.h>
 
 namespace pwn {
 
