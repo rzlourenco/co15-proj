@@ -2,7 +2,7 @@
 #define __PWN_NEXTNODE_H__
 
 #include <cdk/ast/basic_node.h>
-#include <cdk/ast/expression_node.h>
+#include <cstddef>
 
 namespace pwn {
 
@@ -10,17 +10,17 @@ namespace pwn {
    * Class for describing the next keyword
    */
   class next_node: public cdk::basic_node {
-    cdk::expression_node *_next; /*maybe should be an int?*/
+    std::size_t _next;
   public:
     /**
      * @param lineno source code line number for this node
-     * @param return statement expression
+     * @param next cycle depth
      */
-    inline next_node(int lineno, cdk::expression_node *next) :
+    inline next_node(int lineno, std::size_t next=1) :
         cdk::basic_node(lineno), _next(next)  {
     }
 
-    inline cdk::expression_node *next() {
+    inline std::size_t next() {
       return _next;
     }
 
