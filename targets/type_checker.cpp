@@ -107,6 +107,9 @@ void pwn::type_checker::do_function_node(pwn::function_node * const node, int lv
 void pwn::type_checker::do_function_call_node(pwn::function_call_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::type_checker::do_repeat_node(pwn::repeat_node * const node, int lvl) {
+  /* implement me*/
+}
 
 //---------------------------------------------------------------------------
 

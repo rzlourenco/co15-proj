@@ -83,6 +83,7 @@ namespace pwn {
     void do_variable_node(pwn::variable_node * const node, int lvl);
     void do_function_node(pwn::function_node * const node, int lvl);
     void do_function_call_node(pwn::function_call_node * const node, int lvl);
+    void do_repeat_node(pwn::repeat_node * const node, int lvl);
 
 
 
