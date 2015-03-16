@@ -119,6 +119,9 @@ void pwn::type_checker::do_return_node(pwn::return_node * const node, int lvl) {
 void pwn::type_checker::do_next_node(pwn::next_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::type_checker::do_stop_node(pwn::stop_node * const node, int lvl) {
+  /* implement me*/
+}
 
 
 //---------------------------------------------------------------------------

@@ -87,6 +87,7 @@ public:
   virtual void do_addressof_node(pwn::addressof_node * const node, int lvl) = 0;
   virtual void do_return_node(pwn::return_node * const node, int lvl) = 0;
   virtual void do_next_node(pwn::next_node * const node, int lvl) = 0;
+  virtual void do_stop_node(pwn::stop_node * const node, int lvl) = 0;
 
 
 public:

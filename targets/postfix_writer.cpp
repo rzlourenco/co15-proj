@@ -147,6 +147,9 @@ void pwn::postfix_writer::do_return_node(pwn::return_node * const node, int lvl)
 void pwn::postfix_writer::do_next_node(pwn::next_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::postfix_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
+  /* implement me*/
+}
 
 
 //---------------------------------------------------------------------------
