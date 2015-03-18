@@ -12,23 +12,27 @@ namespace pwn {
    * Class for describing a variable(ex: %a) and initialized variables(ex #a = 4)
    */
   class variable_node: public cdk::basic_node {
+    bool _import;
     basic_type *_type;
     std::string _identifier;
     cdk::expression_node *_initializer;
 
   public:
-    inline variable_node(int lineno, basic_type *type, const std::string *identifier, cdk::expression_node *initializer) :
-        cdk::basic_node(lineno), _type(type), _identifier(*identifier), _initializer(initializer) {
+    inline variable_node(int lineno, bool import, basic_type *type, const std::string *identifier, cdk::expression_node *initializer) :
+        cdk::basic_node(lineno), _import(import), _type(type), _identifier(*identifier), _initializer(initializer) {
     }
 
-    inline variable_node(int lineno, basic_type *type, const std::string &identifier, cdk::expression_node *initializer) :
-        cdk::basic_node(lineno), _type(type), _identifier(identifier), _initializer(initializer) {
+    inline variable_node(int lineno, bool import, basic_type *type, const std::string &identifier, cdk::expression_node *initializer) :
+        cdk::basic_node(lineno), _import(import), _type(type), _identifier(identifier), _initializer(initializer) {
     }
-    inline variable_node(int lineno, basic_type *type, const char *identifier, cdk::expression_node *initializer) :
-        cdk::basic_node(lineno), _type(type), _identifier(identifier), _initializer(initializer) {
+    inline variable_node(int lineno, bool import, basic_type *type, const char *identifier, cdk::expression_node *initializer) :
+        cdk::basic_node(lineno), _import(import), _type(type), _identifier(identifier), _initializer(initializer) {
     }
 
   public:
+    inline bool import() {
+      return _import;
+    }
     inline basic_type *type() {
       return _type;
     }
