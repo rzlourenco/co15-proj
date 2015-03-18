@@ -2,7 +2,7 @@
 #define __PWN_FUNCTIONCALLNODE_H__
 
 #include <cdk/ast/expression_node.h>
-#include "lvalue_node.h"
+#include <cdk/ast/sequence_node.h>
 #include <vector>
 #include <string>
 
@@ -13,17 +13,16 @@ namespace pwn {
    */
   class function_call_node: public cdk::expression_node {
     std::string _function;
-    typedef std::vector<cdk::expression_node *> arguments_t;
-    arguments_t *_arguments;
+    cdk::sequence_node *_arguments;
 
   public:
-    inline function_call_node(int lineno, const std::string *function, arguments_t *arguments =nullptr) :
+    inline function_call_node(int lineno, const std::string *function, cdk::sequence_node *arguments =nullptr) :
         cdk::expression_node(lineno), _function(*function),  _arguments(arguments) {
     }
-    inline function_call_node(int lineno, const std::string &function, arguments_t *arguments =nullptr) :
+    inline function_call_node(int lineno, const std::string &function, cdk::sequence_node *arguments =nullptr) :
         cdk::expression_node(lineno), _function(function),  _arguments(arguments) {
     }
-    inline function_call_node(int lineno, const char *function, arguments_t *arguments =nullptr) :
+    inline function_call_node(int lineno, const char *function, cdk::sequence_node *arguments =nullptr) :
         cdk::expression_node(lineno), _function(function),  _arguments(arguments) {
     }
 
@@ -31,7 +30,7 @@ namespace pwn {
     inline std::string *function() {
       return &_function;
     }
-    inline arguments_t *arguments() {
+    inline cdk::sequence_node *arguments() {
       return _arguments;
     }
 
