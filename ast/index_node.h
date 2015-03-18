@@ -1,22 +1,33 @@
 #ifndef __PWN_INDEXNODE_H__
 #define __PWN_INDEXNODE_H__
 
-#include <cdk/ast/unary_expression_node.h>
+#include "cdk/ast/expression_node.h"
+#include "lvalue_node.h"
 
 namespace pwn {
 
   /**
    * Class for describing the index ('[]') operator
    */
-  class index_node: public cdk::unary_expression_node {
+  class index_node: public lvalue_node {
+    lvalue_node *_lvalue;
+    cdk::expression_node *_index;
+ 
   public:
     /**
      * @param lineno source code line number for this node
      * @param left first operand
      * @param right second operand
      */
-    inline index_node(int lineno, expression_node *arg) :
-        cdk::unary_expression_node(lineno, arg) {
+    inline index_node(int lineno, lvalue_node *lvalue, cdk::expression_node *index) :
+        lvalue_node(lineno, "index"), _lvalue(lvalue), _index(index) {
+    }
+
+    inline lvalue_node *lvalue() {
+      return _lvalue;
+    }
+    inline cdk::expression_node *index() {
+      return _index;
     }
 
     /**
