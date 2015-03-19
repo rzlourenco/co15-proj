@@ -36,8 +36,8 @@ namespace pwn {
     inline basic_type *type() {
       return _type;
     }
-    inline std::string *identifier() {
-      return &_identifier;
+    inline std::string &identifier() {
+      return _identifier;
     }
     inline cdk::expression_node *initializer() {
       return _initializer;

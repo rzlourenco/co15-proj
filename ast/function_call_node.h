@@ -27,8 +27,8 @@ namespace pwn {
     }
 
   public:
-    inline std::string *function() {
-      return &_function;
+    inline std::string &function() {
+      return _function;
     }
     inline cdk::sequence_node *arguments() {
       return _arguments;
