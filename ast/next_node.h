@@ -12,10 +12,6 @@ namespace pwn {
   class next_node: public cdk::basic_node {
     std::size_t _next;
   public:
-    /**
-     * @param lineno source code line number for this node
-     * @param next cycle depth
-     */
     inline next_node(int lineno, std::size_t next=1) :
         cdk::basic_node(lineno), _next(next)  {
     }
@@ -24,10 +20,6 @@ namespace pwn {
       return _next;
     }
 
-    /**
-     * @param sp semantic processor visitor
-     * @param level syntactic tree level
-     */
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_next_node(this, level);
     }

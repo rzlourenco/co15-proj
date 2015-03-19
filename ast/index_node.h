@@ -14,11 +14,6 @@ namespace pwn {
     cdk::expression_node *_index;
  
   public:
-    /**
-     * @param lineno source code line number for this node
-     * @param left first operand
-     * @param right second operand
-     */
     inline index_node(int lineno, lvalue_node *lvalue, cdk::expression_node *index) :
         lvalue_node(lineno, "index"), _lvalue(lvalue), _index(index) {
     }
@@ -30,10 +25,6 @@ namespace pwn {
       return _index;
     }
 
-    /**
-     * @param sp semantic processor visitor
-     * @param level syntactic tree level
-     */
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_index_node(this, level);
     }

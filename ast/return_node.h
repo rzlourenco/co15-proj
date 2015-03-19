@@ -12,10 +12,6 @@ namespace pwn {
   class return_node: public cdk::basic_node {
     cdk::expression_node *_return_value;
   public:
-    /**
-     * @param lineno source code line number for this node
-     * @param return statement expression
-     */
     inline return_node(int lineno, cdk::expression_node *return_value) :
         cdk::basic_node(lineno), _return_value(return_value)  {
     }
@@ -24,10 +20,6 @@ namespace pwn {
       return _return_value;
     }
 
-    /**
-     * @param sp semantic processor visitor
-     * @param level syntactic tree level
-     */
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_return_node(this, level);
     }

@@ -22,10 +22,6 @@ namespace pwn {
         cdk::simple_value_node<std::string>(lineno, *s) {
     }
 
-    /**
-     * @param sp semantic processor visitor
-     * @param level syntactic tree level
-     */
     virtual void accept(basic_ast_visitor *sp, int level) {
       sp->do_lvalue_node(this, level);
     }
