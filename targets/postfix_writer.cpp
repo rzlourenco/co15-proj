@@ -263,7 +263,7 @@ void pwn::postfix_writer::do_read_node(pwn::read_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   _pf.CALL("readi");
   _pf.PUSH();
-  node->argument()->accept(this, lvl);
+  //node->argument()->accept(this, lvl);
   _pf.STORE();
 }
 

@@ -174,7 +174,7 @@ void pwn::xml_writer::do_print_node(pwn::print_node * const node, int lvl) {
 
 void pwn::xml_writer::do_read_node(pwn::read_node * const node, int lvl) {
   openTag(node, lvl);
-  node->argument()->accept(this, lvl + 2);
+  //node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);
 }
 

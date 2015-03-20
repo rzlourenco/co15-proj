@@ -1,27 +1,21 @@
-// $Id: read_node.h,v 1.1 2015/02/21 20:27:31 ist13500 Exp $ -*- c++ -*-
 #ifndef __PWN_READNODE_H__
 #define __PWN_READNODE_H__
 
-#include "ast/lvalue_node.h"
+#include "cdk/ast/expression_node.h"
 
 namespace pwn {
 
   /**
    * Class for describing read nodes.
    */
-  class read_node: public cdk::basic_node {
-    pwn::lvalue_node *_argument;
+  class read_node: public cdk::expression_node {
 
   public:
-    inline read_node(int lineno, pwn::lvalue_node *argument) :
-        cdk::basic_node(lineno), _argument(argument) {
+    inline read_node(int lineno) :
+        cdk::expression_node(lineno){
     }
 
   public:
-    inline pwn::lvalue_node *argument() {
-      return _argument;
-    }
-
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_read_node(this, level);
     }

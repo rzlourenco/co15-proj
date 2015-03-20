@@ -178,7 +178,7 @@ void pwn::type_checker::do_print_node(pwn::print_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void pwn::type_checker::do_read_node(pwn::read_node * const node, int lvl) {
-  node->argument()->accept(this, lvl + 2);
+  //node->argument()->accept(this, lvl + 2);
 }
 
 //---------------------------------------------------------------------------
