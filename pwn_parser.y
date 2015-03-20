@@ -78,7 +78,7 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | lval '=' expr           { $$ = new pwn::assignment_node(LINE, $1, $3); }
      ;
 
-lval : tIDENTIFIER             { $$ = new pwn::lvalue_node(LINE, $1); }
+lval : tIDENTIFIER             { $$ = new pwn::idlvalue_node(LINE, $1); }
      ;
 
 %%

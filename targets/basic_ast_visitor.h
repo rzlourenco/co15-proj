@@ -78,7 +78,6 @@ public:
   virtual void do_or_node(pwn::or_node * const node, int lvl) = 0;
   virtual void do_and_node(pwn::and_node * const node, int lvl) = 0;
   virtual void do_not_node(pwn::not_node * const node, int lvl) = 0;
-  virtual void do_index_node(pwn::index_node * const node, int lvl) = 0;
   virtual void do_alloc_node(pwn::alloc_node * const node, int lvl) = 0;
   virtual void do_variable_node(pwn::variable_node * const node, int lvl) = 0;
   virtual void do_function_node(pwn::function_node * const node, int lvl) = 0;
@@ -88,6 +87,8 @@ public:
   virtual void do_return_node(pwn::return_node * const node, int lvl) = 0;
   virtual void do_next_node(pwn::next_node * const node, int lvl) = 0;
   virtual void do_stop_node(pwn::stop_node * const node, int lvl) = 0;
+  virtual void do_index_node(pwn::index_node * const node, int lvl) = 0;
+  virtual void do_idlvalue_node(pwn::idlvalue_node * const node, int lvl) = 0;
 
 
 public:

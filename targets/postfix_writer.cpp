@@ -120,9 +120,6 @@ void pwn::postfix_writer::do_and_node(pwn::and_node * const node, int lvl) {
 void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
-  /* implement me*/
-}
 void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
   /* implement me*/
 }
@@ -150,6 +147,12 @@ void pwn::postfix_writer::do_next_node(pwn::next_node * const node, int lvl) {
 void pwn::postfix_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
+  /* implement me*/
+}
+void pwn::postfix_writer::do_idlvalue_node(pwn::idlvalue_node * const node, int lvl) {
+  /* implement me*/
+}
 
 
 //---------------------------------------------------------------------------
@@ -165,7 +168,7 @@ void pwn::postfix_writer::do_rvalue_node(pwn::rvalue_node * const node, int lvl)
 void pwn::postfix_writer::do_lvalue_node(pwn::lvalue_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   // simplified generation: all variables are global
-  _pf.ADDR(node->value());
+  //_pf.ADDR(node->value());
 }
 
 //---------------------------------------------------------------------------
@@ -175,7 +178,8 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
 
   // DAVID: horrible hack!
   // (this is caused by Simple not having explicit variable declarations)
-  const std::string &id = node->lvalue()->value();
+    const std::string id;
+  /*const std::string &id = node->lvalue()->value()*/;
   std::shared_ptr<pwn::symbol> symbol = _symtab.find(id);
   if (symbol->value() == -1) {
     _pf.DATA(); // variables are all global and live in DATA

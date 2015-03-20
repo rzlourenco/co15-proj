@@ -1,30 +1,22 @@
-// $Id: lvalue_node.h,v 1.1 2015/02/21 20:27:30 ist13500 Exp $
-#ifndef __PWN_NODE_EXPRESSION_LEFTVALUE_H__
-#define __PWN_NODE_EXPRESSION_LEFTVALUE_H__
+#ifndef __PWN_LVALUENODE_H__
+#define __PWN_LVALUENODE_H__
 
-#include <cdk/ast/simple_value_node.h>
-#include <string>
+#include <cdk/ast/expression_node.h>
 
 namespace pwn {
 
   /**
    * Class for describing syntactic tree leaves for holding lvalues.
+   * This class is only useful to describe the concept of lvalues, because 
    */
-  class lvalue_node: public cdk::simple_value_node<std::string> {
+  class lvalue_node: public cdk::expression_node {
+  protected:
+    inline lvalue_node(int lineno) :
+        cdk::expression_node(lineno) {
+    }
   public:
-    inline lvalue_node(int lineno, const char *s) :
-        cdk::simple_value_node<std::string>(lineno, s) {
-    }
-    inline lvalue_node(int lineno, const std::string &s) :
-        cdk::simple_value_node<std::string>(lineno, s) {
-    }
-    inline lvalue_node(int lineno, const std::string *s) :
-        cdk::simple_value_node<std::string>(lineno, *s) {
-    }
 
-    virtual void accept(basic_ast_visitor *sp, int level) {
-      sp->do_lvalue_node(this, level);
-    }
+    virtual void accept(basic_ast_visitor *sp, int level) = 0; /*so index node and other types of lvalues have to implement it*/
 
   };
 

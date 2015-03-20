@@ -92,9 +92,6 @@ void pwn::type_checker::do_and_node(pwn::and_node * const node, int lvl) {
 void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
-  /* implement me*/
-}
 void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
   /* implement me*/
 }
@@ -122,6 +119,12 @@ void pwn::type_checker::do_next_node(pwn::next_node * const node, int lvl) {
 void pwn::type_checker::do_stop_node(pwn::stop_node * const node, int lvl) {
   /* implement me*/
 }
+void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
+  /* implement me*/
+}
+void pwn::type_checker::do_idlvalue_node(pwn::idlvalue_node * const node, int lvl) {
+  /* implement me*/
+}
 
 
 //---------------------------------------------------------------------------
@@ -134,7 +137,8 @@ void pwn::type_checker::do_rvalue_node(pwn::rvalue_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void pwn::type_checker::do_lvalue_node(pwn::lvalue_node * const node, int lvl) {
-  const std::string &id = node->value();
+  const std::string id;
+  /*const std::string &id = node->value()*/;
   std::shared_ptr<pwn::symbol> symbol = _symtab.find(id);
   if (symbol == nullptr) throw id + " undeclared";
   // hackish stuff...
@@ -148,7 +152,8 @@ void pwn::type_checker::do_assignment_node(pwn::assignment_node * const node, in
 
   // DAVID: horrible hack!
   // (this is caused by Simple not having explicit variable declarations)
-  const std::string &id = node->lvalue()->value();
+    const std::string id;
+  /*const std::string &id = node->lvalue()->value();*/
   if (!_symtab.find(id)) {
     _symtab.insert(id, std::make_shared<pwn::symbol>(new basic_type(4, basic_type::TYPE_INT), id, -1)); // put in the symbol table
   }
