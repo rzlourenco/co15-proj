@@ -89,6 +89,7 @@ namespace pwn {
     void do_stop_node(pwn::stop_node * const node, int lvl);
     void do_index_node(pwn::index_node * const node, int lvl);
     void do_idlvalue_node(pwn::idlvalue_node * const node, int lvl);
+    void do_noob_node(pwn::noob_node * const node, int lvl);
 
 
 
