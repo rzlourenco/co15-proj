@@ -126,9 +126,6 @@ void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
 void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::postfix_writer::do_function_node(pwn::function_node * const node, int lvl) {
-  /* implement me*/
-}
 void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
   /* implement me*/
 }
@@ -150,7 +147,7 @@ void pwn::postfix_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
 void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::postfix_writer::do_idlvalue_node(pwn::idlvalue_node * const node, int lvl) {
+void pwn::postfix_writer::do_identifier_node(pwn::identifier_node * const node, int lvl) {
   /* implement me*/
 }
 void pwn::postfix_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
@@ -201,6 +198,7 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
 
 //---------------------------------------------------------------------------
 
+#if 0
 void pwn::postfix_writer::do_program_node(pwn::program_node * const node, int lvl) {
   // Note that Simple doesn't have functions. Thus, it doesn't need
   // a function node. However, it must start in the main function.
@@ -228,6 +226,7 @@ void pwn::postfix_writer::do_program_node(pwn::program_node * const node, int lv
   _pf.EXTERN("prints");
   _pf.EXTERN("println");
 }
+#endif
 
 //---------------------------------------------------------------------------
 

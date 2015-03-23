@@ -68,7 +68,6 @@ namespace pwn {
     void do_not_node(pwn::not_node * const node, int lvl);
     void do_alloc_node(pwn::alloc_node * const node, int lvl);
     void do_variable_node(pwn::variable_node * const node, int lvl);
-    void do_function_node(pwn::function_node * const node, int lvl);
     void do_function_call_node(pwn::function_call_node * const node, int lvl);
     void do_repeat_node(pwn::repeat_node * const node, int lvl);
     void do_addressof_node(pwn::addressof_node * const node, int lvl);
@@ -76,10 +75,8 @@ namespace pwn {
     void do_next_node(pwn::next_node * const node, int lvl);
     void do_stop_node(pwn::stop_node * const node, int lvl);
     void do_index_node(pwn::index_node * const node, int lvl);
-    void do_idlvalue_node(pwn::idlvalue_node * const node, int lvl);
+    void do_identifier_node(pwn::identifier_node * const node, int lvl);
     void do_noob_node(pwn::noob_node * const node, int lvl);
-
-
 
   public:
     void do_while_node(cdk::while_node * const node, int lvl);
@@ -91,7 +88,6 @@ namespace pwn {
     void do_rvalue_node(pwn::rvalue_node * const node, int lvl);
 
   public:
-    void do_program_node(pwn::program_node * const node, int lvl);
     void do_evaluation_node(pwn::evaluation_node * const node, int lvl);
     void do_print_node(pwn::print_node * const node, int lvl);
     void do_read_node(pwn::read_node * const node, int lvl);

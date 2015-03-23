@@ -94,9 +94,6 @@ void pwn::xml_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
 void pwn::xml_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::xml_writer::do_function_node(pwn::function_node * const node, int lvl) {
-  /* implement me*/
-}
 void pwn::xml_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
   /* implement me*/
 }
@@ -118,7 +115,7 @@ void pwn::xml_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
 void pwn::xml_writer::do_index_node(pwn::index_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::xml_writer::do_idlvalue_node(pwn::idlvalue_node * const node, int lvl) {
+void pwn::xml_writer::do_identifier_node(pwn::identifier_node * const node, int lvl) {
   /* implement me*/
 }
 void pwn::xml_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
@@ -149,14 +146,6 @@ void pwn::xml_writer::do_assignment_node(pwn::assignment_node * const node, int 
   openTag("rvalue", lvl + 2);
   node->rvalue()->accept(this, lvl + 4);
   closeTag("rvalue", lvl + 2);
-  closeTag(node, lvl);
-}
-
-//---------------------------------------------------------------------------
-
-void pwn::xml_writer::do_program_node(pwn::program_node * const node, int lvl) {
-  openTag(node, lvl);
-  node->statements()->accept(this, lvl + 4);
   closeTag(node, lvl);
 }
 

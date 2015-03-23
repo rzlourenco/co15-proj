@@ -12,9 +12,9 @@
 %}
 
 %union {
-  int                   i;	/* integer value */
-  std::string          *s;	/* symbol name or string literal */
-  cdk::basic_node      *node;	/* node pointer */
+  int                   i;    /* integer value */
+  std::string          *s;    /* symbol name or string literal */
+  cdk::basic_node      *node;    /* node pointer */
   cdk::sequence_node   *sequence;
   cdk::expression_node *expression; /* expression nodes */
   pwn::lvalue_node  *lvalue;
@@ -43,15 +43,15 @@
 %}
 %%
 
-program	: tBEGIN list tEND { compiler->ast(new pwn::program_node(LINE, $2)); }
-	      ;
+program : list { compiler->ast($1); }
+        ;
 
-list : stmt	     { $$ = new cdk::sequence_node(LINE, $1); }
-	   | list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
-	   ;
+list : stmt      { $$ = new cdk::sequence_node(LINE, $1); }
+     | list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
+     ;
 
 stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1); }
- 	   | tPRINT expr ';'                  { $$ = new pwn::print_node(LINE, $2, false); }
+     | tPRINT expr ';'                  { $$ = new pwn::print_node(LINE, $2, false); }
      | tREAD lval ';'                   { $$ = new pwn::read_node(LINE); }
      | tWHILE '(' expr ')' stmt         { $$ = new cdk::while_node(LINE, $3, $5); }
      | tIF '(' expr ')' stmt %prec tIFX { $$ = new cdk::if_node(LINE, $3, $5); }
@@ -59,26 +59,30 @@ stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1
      | '{' list '}'                     { $$ = $2; }
      ;
 
-expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
-	   | tSTRING                 { $$ = new cdk::string_node(LINE, $1); }
+expr : '(' expr ')'            { $$ = $2; }
+     | tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
+     | tSTRING                 { $$ = new cdk::string_node(LINE, $1); }
+     | lval                    { $$ = new pwn::rvalue_node(LINE, $1); }
      | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
-     | expr '+' expr	         { $$ = new cdk::add_node(LINE, $1, $3); }
-     | expr '-' expr	         { $$ = new cdk::sub_node(LINE, $1, $3); }
-     | expr '*' expr	         { $$ = new cdk::mul_node(LINE, $1, $3); }
-     | expr '/' expr	         { $$ = new cdk::div_node(LINE, $1, $3); }
-     | expr '%' expr	         { $$ = new cdk::mod_node(LINE, $1, $3); }
-     | expr '<' expr	         { $$ = new cdk::lt_node(LINE, $1, $3); }
-     | expr '>' expr	         { $$ = new cdk::gt_node(LINE, $1, $3); }
-     | expr tGE expr	         { $$ = new cdk::ge_node(LINE, $1, $3); }
+     | '+' expr %prec tUNARY   { $$ = new pwn::identity_node(LINE, $2); }
+     | '~' expr %prec tUNARY   { $$ = new pwn::not_node(LINE, $2); }
+     | expr '+' expr           { $$ = new cdk::add_node(LINE, $1, $3); }
+     | expr '-' expr           { $$ = new cdk::sub_node(LINE, $1, $3); }
+     | expr '*' expr           { $$ = new cdk::mul_node(LINE, $1, $3); }
+     | expr '/' expr           { $$ = new cdk::div_node(LINE, $1, $3); }
+     | expr '%' expr           { $$ = new cdk::mod_node(LINE, $1, $3); }
+     | expr '<' expr           { $$ = new cdk::lt_node(LINE, $1, $3); }
+     | expr '>' expr           { $$ = new cdk::gt_node(LINE, $1, $3); }
+     | expr tGE expr           { $$ = new cdk::ge_node(LINE, $1, $3); }
      | expr tLE expr           { $$ = new cdk::le_node(LINE, $1, $3); }
-     | expr tNE expr	         { $$ = new cdk::ne_node(LINE, $1, $3); }
-     | expr tEQ expr	         { $$ = new cdk::eq_node(LINE, $1, $3); }
-     | '(' expr ')'            { $$ = $2; }
-     | lval                    { $$ = new pwn::rvalue_node(LINE, $1); }  //FIXME
+     | expr tNE expr           { $$ = new cdk::ne_node(LINE, $1, $3); }
+     | expr tEQ expr           { $$ = new cdk::eq_node(LINE, $1, $3); }
+     | expr '|' expr           { $$ = new pwn::or_node(LINE, $1, $3); }
+     | expr '&' expr           { $$ = new pwn::and_node(LINE, $1, $3); }
      | lval '=' expr           { $$ = new pwn::assignment_node(LINE, $1, $3); }
      ;
 
-lval : tIDENTIFIER             { $$ = new pwn::idlvalue_node(LINE, $1); }
+lval : tIDENTIFIER             { $$ = new pwn::identifier_node(LINE, *$1); }
      ;
 
 %%

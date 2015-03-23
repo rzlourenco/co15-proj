@@ -98,9 +98,6 @@ void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
 void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::type_checker::do_function_node(pwn::function_node * const node, int lvl) {
-  /* implement me*/
-}
 void pwn::type_checker::do_function_call_node(pwn::function_call_node * const node, int lvl) {
   /* implement me*/
 }
@@ -122,7 +119,7 @@ void pwn::type_checker::do_stop_node(pwn::stop_node * const node, int lvl) {
 void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::type_checker::do_idlvalue_node(pwn::idlvalue_node * const node, int lvl) {
+void pwn::type_checker::do_identifier_node(pwn::identifier_node * const node, int lvl) {
   /* implement me*/
 }
 void pwn::type_checker::do_noob_node(pwn::noob_node * const node, int lvl) {
