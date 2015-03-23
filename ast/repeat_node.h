@@ -2,7 +2,6 @@
 #define __PWN_REPEATNODE_H__
 
 #include <cdk/ast/basic_node.h>
-#include <cdk/ast/sequence_node.h>
 
 namespace pwn {
 
@@ -10,27 +9,27 @@ namespace pwn {
    * Class for describing the repeat loop
    */
   class repeat_node: public cdk::basic_node {
-    cdk::sequence_node *_initializer; /*optional*/
-    cdk::sequence_node *_condition; /*optional*/
-    cdk::sequence_node *_repetition; /*optional*/
-    cdk::sequence_node *_body; /*optional*/
+    cdk::expression_node *_initializer; /*optional*/
+    cdk::expression_node *_condition; /*optional*/
+    cdk::expression_node *_repetition; /*optional*/
+    cdk::basic_node *_body; /*optional*/
     
   public:
-    inline repeat_node(int lineno, cdk::sequence_node *initializer=nullptr, cdk::sequence_node *condition=nullptr, cdk::sequence_node *repetition=nullptr, cdk::sequence_node *body=nullptr) :
+    inline repeat_node(int lineno, cdk::expression_node *initializer, cdk::expression_node *condition, cdk::expression_node *repetition, cdk::basic_node *body) :
         cdk::basic_node(lineno), _initializer(initializer), _condition(condition), _repetition(repetition), _body(body){
     }
 
   public:
-    inline cdk::sequence_node *initializer(){
+    inline cdk::expression_node *initializer(){
       return _initializer;
     }
-    inline cdk::sequence_node *condition() {
+    inline cdk::expression_node *condition() {
       return _condition;
     }
-    inline cdk::sequence_node *repetition() {
+    inline cdk::expression_node *repetition() {
       return _repetition;
     }
-    inline cdk::sequence_node *body() {
+    inline cdk::basic_node *body() {
       return _body;
     }
 

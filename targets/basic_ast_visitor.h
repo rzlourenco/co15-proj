@@ -90,6 +90,7 @@ public:
   virtual void do_index_node(pwn::index_node * const node, int lvl) { }
 
   virtual void do_function_call_node(pwn::function_call_node * const node, int lvl) { }
+  virtual void do_expr_sequence_node(pwn::expr_sequence_node * const node, int lvl) { }
 
 public:
   virtual void do_lvalue_node(pwn::lvalue_node * const node, int lvl) { }
