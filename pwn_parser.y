@@ -28,10 +28,15 @@
 %nonassoc tELSE
 
 %right '='
-%left tGE tLE tEQ tNE '>' '<'
+%left '|'
+%left '&'
+%nonassoc tUNARY2
+%left tEQ tNE
+%left tGE tLE '>' '<'
 %left '+' '-'
 %left '*' '/' '%'
 %nonassoc tUNARY
+%nonassoc '[' ']'
 
 %type <node> stmt program
 %type <sequence> list
@@ -65,7 +70,8 @@ expr : '(' expr ')'            { $$ = $2; }
      | lval                    { $$ = new pwn::rvalue_node(LINE, $1); }
      | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
      | '+' expr %prec tUNARY   { $$ = new pwn::identity_node(LINE, $2); }
-     | '~' expr %prec tUNARY   { $$ = new pwn::not_node(LINE, $2); }
+     | '~' expr %prec tUNARY2  { $$ = new pwn::not_node(LINE, $2); }
+     | lval '?' %prec tUNARY   { $$ = new pwn::addressof_node(LINE, $1); }
      | expr '+' expr           { $$ = new cdk::add_node(LINE, $1, $3); }
      | expr '-' expr           { $$ = new cdk::sub_node(LINE, $1, $3); }
      | expr '*' expr           { $$ = new cdk::mul_node(LINE, $1, $3); }
@@ -83,6 +89,7 @@ expr : '(' expr ')'            { $$ = $2; }
      ;
 
 lval : tIDENTIFIER             { $$ = new pwn::identifier_node(LINE, *$1); }
+     | expr '[' expr ']'       { $$ = new pwn::index_node(LINE, $1, $3); }
      ;
 
 %%
