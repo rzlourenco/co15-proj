@@ -87,10 +87,10 @@ public:
   virtual void do_assignment_node(pwn::assignment_node * const node, int lvl) { }
   virtual void do_or_node(pwn::or_node * const node, int lvl) { }
   virtual void do_and_node(pwn::and_node * const node, int lvl) { }
+  virtual void do_comma_node(pwn::comma_node * const node, int lvl) { }
   virtual void do_index_node(pwn::index_node * const node, int lvl) { }
 
   virtual void do_function_call_node(pwn::function_call_node * const node, int lvl) { }
-  virtual void do_expr_sequence_node(pwn::expr_sequence_node * const node, int lvl) { }
 
 public:
   virtual void do_lvalue_node(pwn::lvalue_node * const node, int lvl) { }

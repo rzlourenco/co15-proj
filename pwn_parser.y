@@ -27,6 +27,7 @@
 %nonassoc tIFX
 %nonassoc tELSE
 
+%left ','
 %right '='
 %left '|'
 %left '&'
@@ -86,6 +87,7 @@ expr : '(' expr ')'            { $$ = $2; }
      | expr '|' expr           { $$ = new pwn::or_node(LINE, $1, $3); }
      | expr '&' expr           { $$ = new pwn::and_node(LINE, $1, $3); }
      | lval '=' expr           { $$ = new pwn::assignment_node(LINE, $1, $3); }
+     | expr ',' expr           { $$ = new pwn::comma_node(LINE, $1, $3); }
      ;
 
 lval : tIDENTIFIER             { $$ = new pwn::identifier_node(LINE, *$1); }

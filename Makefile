@@ -55,7 +55,7 @@ $(Y_NAME).tab.c: $(Y_NAME).y
 $(Y_NAME).tab.h: $(Y_NAME).y
 
 # this is needed to force byacc to run
-$(L_NAME).o: $(L_NAME).cpp $(Y_NAME).tab.h
+$(L_NAME).o: $(L_NAME).cpp $(Y_NAME).tab.h $(Y_NAME).tab.c
 
 .PHONY: ./mknodedecls.pl
 ast/all.h: ./mknodedecls.pl
