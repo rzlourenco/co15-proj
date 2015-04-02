@@ -34,6 +34,7 @@
 %nonassoc tELSE
 
 %left ','
+%left tARG
 %right '='
 %left '|'
 %left '&'
@@ -46,7 +47,7 @@
 %nonassoc '[' ']'
 
 %type <node> stmt program decl var_decl func_decl 
-%type <sequence> statements declarations params params_opt
+%type <sequence> statements declarations params params_opt args args_opt
 %type <expression> expr expr_opt
 %type <lvalue> lval
 %type <s> string
@@ -147,11 +148,20 @@ expr : '(' expr ')'            { $$ = $2; }
      | expr '&' expr           { $$ = new pwn::and_node(LINE, $1, $3); }
      | lval '=' expr           { $$ = new pwn::assignment_node(LINE, $1, $3); }
      | expr ',' expr           { $$ = new pwn::comma_node(LINE, $1, $3); }
+     | tIDENTIFIER '(' args_opt ')' { $$ = new pwn::function_call_node(LINE, $1, $3); }
      ;
 
 expr_opt : expr                { $$ = $1; }
          |                     { $$ = nullptr; }
          ;
+
+args_opt : args   { $$ = $1; }
+         |        { $$ = nullptr; }
+         ;
+
+args : expr %prec tARG { $$ = new cdk::sequence_node(LINE, $1); }
+     | args ',' expr   { $$ = new cdk::sequence_node(LINE, $3, $1); }
+     ;
 
 lval : tIDENTIFIER             { $$ = new pwn::identifier_node(LINE, *$1); }
      | expr '[' expr ']'       { $$ = new pwn::index_node(LINE, $1, $3); }

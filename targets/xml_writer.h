@@ -28,6 +28,11 @@ namespace pwn {
     }
 
   private:
+
+    std::string indent(int level) {
+        return std::string(level, ' ');
+    }
+
     inline void openTag(const std::string &tag, int lvl) {
       os() << std::string(lvl, ' ') + "<" + tag + ">" << std::endl;
     }
@@ -91,7 +96,6 @@ namespace pwn {
     void do_noob_node(pwn::noob_node * const node, int lvl);
 
   public:
-    void do_while_node(cdk::while_node * const node, int lvl);
     void do_if_node(cdk::if_node * const node, int lvl);
     void do_if_else_node(cdk::if_else_node * const node, int lvl);
 
@@ -104,6 +108,8 @@ namespace pwn {
     void do_print_node(pwn::print_node * const node, int lvl);
     void do_read_node(pwn::read_node * const node, int lvl);
     void do_assignment_node(pwn::assignment_node * const node, int lvl);
+    void do_function_decl_node(pwn::function_decl_node * const node, int lvl);
+    void do_function_def_node(pwn::function_def_node * const node, int lvl);
   };
 
 } // pwn
