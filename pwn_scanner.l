@@ -12,37 +12,57 @@
 // don't change this
 #define yyerror LexerError
 %}
-%x X_STRING
+%x X_STRING X_COMMENT
+
+WHITESPACE              [ \t\n\r]+
+H                       [0-9a-fA-F]
+INT			0|([1-9][0-9]*)
 %%
 
-"--".*                 ; /* ignore comments */
+"//".*                 ; /* ignore comments */
+"/*"			yy_push_state(X_COMMENT);
 
 ">="                   return tGE; 
 "<="                   return tLE; 
 "=="                   return tEQ; 
-"!="                   return tNE; 
+"<>"                   return tNE;
+"!!"			return tPRINT;
 
-"while"                return tWHILE; 
 "if"                   return tIF; 
 "else"                 return tELSE; 
-"print"                return tPRINT; 
-"read"                 return tREAD; 
-"begin"                return tBEGIN; 
-"end"                  return tEND; 
+"import"		return tIMPORT;
+"local"			return tLOCAL;
+"next"			return tNEXT;
+"stop"			return tSTOP;
+"repeat"		return tREPEAT;
+"noob"			return tNOOB;
+"return"		return tRETURN;
 
-[A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
+[_A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 
-\'                     yy_push_state(X_STRING); yylval.s = new std::string("");
-<X_STRING>\'           yy_pop_state(); return tSTRING;
-<X_STRING>\\\'         *yylval.s += yytext + 1;
+\"                     yy_push_state(X_STRING); yylval.s = new std::string("");
+<X_STRING>\"           yy_pop_state(); return tSTRING;
+<X_STRING>\\{H}{H}?	*yylval.s += static_cast<char>(strtol(yytext+1, nullptr, 16)); 
+<X_STRING>\\\"         *yylval.s += "\"";
+<X_STRING>\\\\		*yylval.s += "\\";
+<X_STRING>\\n		*yylval.s += "\n";
+<X_STRING>\\r		*yylval.s += "\r";
+<X_STRING>\\t		*yylval.s += "\t";
 <X_STRING>.            *yylval.s += yytext;
 <X_STRING>\n           yyerror("newline in string");
 
-[0-9]+                 yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
+<X_COMMENT>"/*"		yy_push_state(X_COMMENT);
+<X_COMMENT>"*/"		yy_pop_state();
+<X_COMMENT>.|\n		;
 
-[-()<>=+*/%;{}.]       return *yytext;
+{INT}			yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
+0[xX]{H}+		yylval.i = strtol(yytext, nullptr, 16); return tINTEGER;
 
-[ \t\n]+               ; /* ignore whitespace */
+({INT}\.{INT}?|{INT}?\.{INT})(e[-+]?{INT})? yylval.d = strtod(yytext, nullptr); return tDOUBLE;
+
+[-()<>=+*/%;{}!@,~&|?\[\]$#]     return *yytext;
+
+{WHITESPACE}		; /* ignore whitespace */
 
 .                      yyerror("Unknown character");
 
