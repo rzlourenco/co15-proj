@@ -127,13 +127,13 @@ void pwn::xml_writer::do_return_node(pwn::return_node * const node, int lvl) {
 void pwn::xml_writer::do_next_node(pwn::next_node * const node, int lvl) {
   write_element(node, lvl,
       std::make_tuple(
-        std::make_pair("next", node->next()))
+        std::make_pair("next", node->next())),
       std::make_tuple());
 }
 void pwn::xml_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
   write_element(node, lvl,
       std::make_tuple(
-        std::make_pair("stop", node->stop()))
+        std::make_pair("stop", node->stop())),
       std::make_tuple());
 }
 void pwn::xml_writer::do_index_node(pwn::index_node * const node, int lvl) {

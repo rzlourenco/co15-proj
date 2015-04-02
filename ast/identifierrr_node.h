@@ -1,5 +1,5 @@
-#ifndef __PWN_IDENTIFIERNODE_H__
-#define __PWN_IDENTIFIERNODE_H__
+#ifndef __PWN_IDENTIFIERRRNODE_H__
+#define __PWN_IDENTIFIERRRNODE_H__
 
 #include "lvalue_node.h"
 #include <string>
@@ -9,11 +9,11 @@ namespace pwn {
   /**
    * Class for describing syntactic tree leaves for holding identifier lvalues (the a in a = 3).
    */
-  class identifier_node : public lvalue_node {
+  class identifierrr_node : public lvalue_node {
     std::string _identifier;
 
   public:
-    inline identifier_node(int lineno, const std::string &identifier) :
+    inline identifierrr_node(int lineno, const std::string &identifier) :
         lvalue_node(lineno), _identifier(identifier) {
     }
 
