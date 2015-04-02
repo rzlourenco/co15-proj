@@ -20,6 +20,7 @@ namespace pwn {
   public:
     xml_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<pwn::symbol> &symtab) :
         basic_ast_visitor(compiler), _symtab(symtab) {
+        os() << std::boolalpha;
     }
 
   public:
@@ -33,40 +34,115 @@ namespace pwn {
         return std::string(level, ' ');
     }
 
-    inline void openTag(const std::string &tag, int lvl) {
+    inline void write_attributes() {
+        os() << ">" << std::endl;
+    } 
+
+    template <typename Arg1, typename... Args>
+    inline void write_attributes(Arg1 arg1, Args... args) {
+        os() << " " << arg1.first << "=\"" << arg1.second << "\"";
+        write_attributes(args...);
+    }
+
+    template <typename... Args>
+    inline void open_element(const std::string &tag, int lvl, Args... args) {
+        os() << indent(lvl) << "<" << tag;
+        write_attributes(args...);
+    }
+
+    template <typename... Args>
+    inline void open_element(cdk::basic_node * const node, int lvl, Args... args) {
+        open_element(node->name(), lvl, args...);
+    }
+
+    inline void open_element(const std::string &tag, int lvl) {
       os() << std::string(lvl, ' ') + "<" + tag + ">" << std::endl;
     }
-    inline void openTag(const cdk::basic_node *node, int lvl) {
-      openTag(node->name(), lvl);
+
+    inline void open_element(const cdk::basic_node *node, int lvl) {
+      open_element(node->name(), lvl);
     }
-    inline void closeTag(const std::string &tag, int lvl) {
+
+    inline void close_element(const std::string &tag, int lvl) {
       os() << std::string(lvl, ' ') + "</" + tag + ">" << std::endl;
     }
-    inline void closeTag(const cdk::basic_node *node, int lvl) {
-      closeTag(node->name(), lvl);
+    inline void close_element(const cdk::basic_node *node, int lvl) {
+      close_element(node->name(), lvl);
+    }
+
+    inline void write_children(int lvl) { (void)lvl; }
+
+    template <typename Arg1, typename... Args>
+    inline void write_children(int lvl, Arg1 arg1, Args... args) {
+        open_element(arg1.first, lvl+2);
+        if (arg1.second != nullptr) {
+            arg1.second->accept(this, lvl+4);
+        }
+        
+        close_element(arg1.first, lvl+2);
+        write_children(lvl, args...);
+    }
+
+    // Shamelessly taken from Stack Overflow
+    template <int...>
+    struct seq { };
+
+    template <int N, int... S>
+    struct gens : gens<N-1, N-1, S...> { };
+
+    template <int... S>
+    struct gens <0, S...> {
+        typedef seq<S...> type;
+    };
+
+    template <typename AttrType, int... S>
+    inline void call_write_attributes(const std::string &tag, int lvl, AttrType attrs, seq<S...>) {
+        open_element(tag, lvl, std::get<S>(attrs)...);
+    }
+    template <typename ChildType, int... S>
+    inline void call_write_children(int lvl, ChildType children, seq<S...>) {
+        write_children(lvl, std::get<S>(children)...);
+    }
+
+    template <typename AttrType, typename ChildType>
+    inline void write_element(cdk::basic_node * const node, int lvl, AttrType attrs, ChildType children) {
+        call_write_attributes(node->name(), lvl, attrs,
+                typename gens<std::tuple_size<AttrType>::value>::type());
+
+        call_write_children(lvl, children,
+                typename gens<std::tuple_size<ChildType>::value>::type());
+
+        close_element(node->name(), lvl);
+    }
+
+    inline void write_element(cdk::basic_node * const node, int lvl) {
+        write_element(node, lvl,
+                std::make_tuple(),
+                std::make_tuple());
+    }
+
+    template<typename T>
+    void write_simple(cdk::simple_value_node<T> * const node, int lvl) {
+        os() << std::string(lvl, ' ') << "<" << node->name() << ">" << node->value() << "</" << node->name() << ">" << std::endl;
     }
 
   public:
     void do_sequence_node(cdk::sequence_node * const node, int lvl);
 
   protected:
-    template<typename T>
-    void processSimple(cdk::simple_value_node<T> * const node, int lvl) {
-      os() << std::string(lvl, ' ') << "<" << node->name() << ">" << node->value() << "</" << node->name() << ">" << std::endl;
-    }
 
   public:
     void do_integer_node(cdk::integer_node * const node, int lvl);
     void do_string_node(cdk::string_node * const node, int lvl);
 
   protected:
-    void processUnaryExpression(cdk::unary_expression_node * const node, int lvl);
+    void process_unary_expression(cdk::unary_expression_node * const node, int lvl);
 
   public:
     void do_neg_node(cdk::neg_node * const node, int lvl);
 
   protected:
-    void processBinaryExpression(cdk::binary_expression_node * const node, int lvl);
+    void process_binary_expression(cdk::binary_expression_node * const node, int lvl);
 
   public:
     void do_add_node(cdk::add_node * const node, int lvl);

@@ -11,12 +11,12 @@ namespace pwn {
   class repeat_node: public cdk::basic_node {
     cdk::expression_node *_initializer; /*optional*/
     cdk::expression_node *_condition; /*optional*/
-    cdk::expression_node *_repetition; /*optional*/
+    cdk::expression_node *_increment; /*optional*/
     cdk::basic_node *_body; /*optional*/
     
   public:
-    inline repeat_node(int lineno, cdk::expression_node *initializer, cdk::expression_node *condition, cdk::expression_node *repetition, cdk::basic_node *body) :
-        cdk::basic_node(lineno), _initializer(initializer), _condition(condition), _repetition(repetition), _body(body){
+    inline repeat_node(int lineno, cdk::expression_node *initializer, cdk::expression_node *condition, cdk::expression_node *increment, cdk::basic_node *body) :
+        cdk::basic_node(lineno), _initializer(initializer), _condition(condition), _increment(increment), _body(body){
     }
 
   public:
@@ -26,8 +26,8 @@ namespace pwn {
     inline cdk::expression_node *condition() {
       return _condition;
     }
-    inline cdk::expression_node *repetition() {
-      return _repetition;
+    inline cdk::expression_node *increment() {
+      return _increment;
     }
     inline cdk::basic_node *body() {
       return _body;
