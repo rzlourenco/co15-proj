@@ -147,7 +147,7 @@ void pwn::postfix_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
 void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::postfix_writer::do_identifier_node(pwn::identifier_node * const node, int lvl) {
+void pwn::postfix_writer::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
   /* implement me*/
 }
 void pwn::postfix_writer::do_noob_node(pwn::noob_node * const node, int lvl) {

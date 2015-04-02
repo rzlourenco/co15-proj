@@ -145,7 +145,7 @@ void pwn::xml_writer::do_index_node(pwn::index_node * const node, int lvl) {
         std::make_pair("pointer", node->pointer()),
         std::make_pair("index", node->index())));
 }
-void pwn::xml_writer::do_identifier_node(pwn::identifier_node * const node, int lvl) {
+void pwn::xml_writer::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
   //CHECK_TYPES...
 
   write_element(node, lvl,

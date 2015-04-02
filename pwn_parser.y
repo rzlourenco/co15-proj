@@ -163,7 +163,7 @@ args : expr %prec tARG { $$ = new cdk::sequence_node(LINE, $1); }
      | args ',' expr   { $$ = new cdk::sequence_node(LINE, $3, $1); }
      ;
 
-lval : tIDENTIFIER             { $$ = new pwn::identifier_node(LINE, *$1); }
+lval : tIDENTIFIER             { $$ = new pwn::identifierrr_node(LINE, *$1); }
      | expr '[' expr ']'       { $$ = new pwn::index_node(LINE, $1, $3); }
      ;
 

@@ -76,7 +76,7 @@ public:
 
 public:
   virtual void do_noob_node(pwn::noob_node * const node, int lvl) { }
-  virtual void do_identifier_node(pwn::identifier_node * const node, int lvl) { }
+  virtual void do_identifier_node(pwn::identifierrr_node * const node, int lvl) { }
   virtual void do_read_node(pwn::read_node * const node, int lvl) { }
 
   virtual void do_identity_node(pwn::identity_node * const node, int lvl) { }
