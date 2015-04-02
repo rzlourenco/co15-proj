@@ -16,11 +16,11 @@ namespace pwn {
         function_decl_node(int lineno
                           , bool import
                           , basic_type *return_type
-                          , const std::string &name
+                          , const std::string *name
                           , cdk::sequence_node *parameters)
             : cdk::basic_node(lineno)
             , _return_type(return_type)
-            , _name(name)
+            , _name(*name)
             , _parameters(parameters)
             , _import(import) { }
 
