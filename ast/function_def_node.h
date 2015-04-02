@@ -17,7 +17,7 @@ namespace pwn {
                          , cdk::sequence_node *parameters
                          , cdk::expression_node *default_return
                          , cdk::basic_node *body)
-            : function_decl_node(lineno, return_type, *name, parameters, import)
+            : function_decl_node(lineno, import, return_type, name, parameters)
             , _default_return(default_return)
             , _body(body) { }
 
