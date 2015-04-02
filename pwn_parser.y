@@ -66,7 +66,7 @@ declarations : decl              { $$ = new cdk::sequence_node(LINE, $1); }
              | declarations decl { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
 
-decl : var_decl  { $$ = $1; }
+decl : var_decl ';'  { $$ = $1; }
      | func_decl { $$ = $1; }
      ;
 
