@@ -2,6 +2,7 @@
 #include <string>
 #include "targets/xml_writer.h"
 #include "targets/type_checker.h"
+#include "../pwn_type.h"
 #include "ast/all.h"  // automatically generated
 
 //---------------------------------------------------------------------------
@@ -182,7 +183,13 @@ void pwn::xml_writer::do_function_def_node(pwn::function_def_node * const node, 
 }
 
 void pwn::xml_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
-  /* implement me*/
+  write_element(node, lvl,
+      std::make_tuple(
+        std::make_pair("import", node->import()),
+        std::make_pair("type", *(node->type())),
+        std::make_pair("identifier", node->identifier())),
+      std::make_tuple(
+        std::make_pair("initializer", node->initializer())));	
 }
 
 //---------------------------------------------------------------------------
