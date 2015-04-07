@@ -105,7 +105,7 @@ type : '#'          { $$ = new basic_type(4, basic_type::TYPE_INT); }
      | '!'          { $$ = new basic_type(-1, basic_type::TYPE_VOID); }
      ;
 
-statements : stmt            { $$ = new cdk::sequence_node(LINE, $1); }
+statements :                 { $$ = nullptr; }
            | statements stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
            ;
 
