@@ -1,5 +1,5 @@
 %{
-// $Id: pwn_parser.y,v 1.3 2015/03/24 13:54:05 ist176133 Exp $
+// $Id: pwn_parser.y,v 1.7 2015/04/08 21:00:09 ist176133 Exp $
 //-- don't change *any* of these: if you do, you'll break the compiler.
 #include <cdk/compiler.h>
 #include "ast/all.h"
@@ -116,6 +116,8 @@ stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1
      | tIF '(' expr ')' stmt tELSE stmt { $$ = new cdk::if_else_node(LINE, $3, $5, $7); }
      | '{' statements '}'               { $$ = $2; }
      | tRETURN                          { $$ = new pwn::return_node(LINE); }
+     | tSTOP ';'                        { $$ = new pwn::stop_node(LINE, 1);}
+     | tNEXT ';'                        { $$ = new pwn::next_node(LINE, 1);}
      | tSTOP tINTEGER ';'               { $$ = new pwn::stop_node(LINE, $2);}
      | tNEXT tINTEGER ';'               { $$ = new pwn::next_node(LINE, $2);}
      | tREPEAT '(' expr_opt ';' expr_opt ';' expr_opt ')' stmt { $$ = new pwn::repeat_node(LINE, $3, $5, $7, $9); }
