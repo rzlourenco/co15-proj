@@ -102,7 +102,7 @@ type : '#'          { $$ = new basic_type(4, basic_type::TYPE_INT); }
      | '$'          { $$ = new basic_type(4, basic_type::TYPE_STRING); }
      | '*'          { $$ = new basic_type(4, basic_type::TYPE_POINTER); }
      | '<' type '>' { $$ = new basic_type($2->size(), $2->name() | pwn_type::TYPE_CONST); } 
-     | '!'          { $$ = new basic_type(-1, basic_type::TYPE_VOID); }
+     | '!'          { $$ = new basic_type(0, basic_type::TYPE_VOID); }
      ;
 
 statements :                 { $$ = nullptr; }
@@ -124,33 +124,46 @@ stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1
      | var_decl ';'                     { $$ = $1; }                    
      ;
 
-expr : '(' expr ')'            { $$ = $2; }
+expr :/*
+*/
+       tIDENTIFIER '(' args_opt ')' { $$ = new pwn::function_call_node(LINE, $1, $3); }
+     | '(' expr ')'            { $$ = $2; }
+     | '[' expr ']'            { $$ = new pwn::alloc_node(LINE, $2); } /*
+*/
+     | '+' expr %prec tUNARY   { $$ = new pwn::identity_node(LINE, $2); }
+     | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
+     | lval '?' %prec tUNARY   { $$ = new pwn::addressof_node(LINE, $1); } /*
+*/
+     | expr '*' expr           { $$ = new cdk::mul_node(LINE, $1, $3); }
+     | expr '/' expr           { $$ = new cdk::div_node(LINE, $1, $3); }
+     | expr '%' expr           { $$ = new cdk::mod_node(LINE, $1, $3); } /*
+*/
+     | expr '+' expr           { $$ = new cdk::add_node(LINE, $1, $3); }
+     | expr '-' expr           { $$ = new cdk::sub_node(LINE, $1, $3); } /*
+*/
+     | expr '<' expr           { $$ = new cdk::lt_node(LINE, $1, $3); }
+     | expr '>' expr           { $$ = new cdk::gt_node(LINE, $1, $3); }
+     | expr tGE expr           { $$ = new cdk::ge_node(LINE, $1, $3); }
+     | expr tLE expr           { $$ = new cdk::le_node(LINE, $1, $3); } /*
+*/
+     | expr tNE expr           { $$ = new cdk::ne_node(LINE, $1, $3); }
+     | expr tEQ expr           { $$ = new cdk::eq_node(LINE, $1, $3); } /*
+*/
+     | '~' expr %prec tUNARY2  { $$ = new pwn::not_node(LINE, $2); } /*
+*/
+     | expr '&' expr           { $$ = new pwn::and_node(LINE, $1, $3); } /*
+*/
+     | expr '|' expr           { $$ = new pwn::or_node(LINE, $1, $3); }/*
+*/
+     | lval '=' expr           { $$ = new pwn::assignment_node(LINE, $1, $3); }/*
+*/
      | tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | tDOUBLE                 { $$ = new cdk::double_node(LINE, $1); }
      | string                  { $$ = new cdk::string_node(LINE, $1); }
      | tNOOB                   { $$ = new pwn::noob_node(LINE); }
      | '@'                     { $$ = new pwn::read_node(LINE); }
      | lval                    { $$ = new pwn::rvalue_node(LINE, $1); }
-     | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
-     | '+' expr %prec tUNARY   { $$ = new pwn::identity_node(LINE, $2); }
-     | '~' expr %prec tUNARY2  { $$ = new pwn::not_node(LINE, $2); }
-     | lval '?' %prec tUNARY   { $$ = new pwn::addressof_node(LINE, $1); }
-     | expr '+' expr           { $$ = new cdk::add_node(LINE, $1, $3); }
-     | expr '-' expr           { $$ = new cdk::sub_node(LINE, $1, $3); }
-     | expr '*' expr           { $$ = new cdk::mul_node(LINE, $1, $3); }
-     | expr '/' expr           { $$ = new cdk::div_node(LINE, $1, $3); }
-     | expr '%' expr           { $$ = new cdk::mod_node(LINE, $1, $3); }
-     | expr '<' expr           { $$ = new cdk::lt_node(LINE, $1, $3); }
-     | expr '>' expr           { $$ = new cdk::gt_node(LINE, $1, $3); }
-     | expr tGE expr           { $$ = new cdk::ge_node(LINE, $1, $3); }
-     | expr tLE expr           { $$ = new cdk::le_node(LINE, $1, $3); }
-     | expr tNE expr           { $$ = new cdk::ne_node(LINE, $1, $3); }
-     | expr tEQ expr           { $$ = new cdk::eq_node(LINE, $1, $3); }
-     | expr '|' expr           { $$ = new pwn::or_node(LINE, $1, $3); }
-     | expr '&' expr           { $$ = new pwn::and_node(LINE, $1, $3); }
-     | lval '=' expr           { $$ = new pwn::assignment_node(LINE, $1, $3); }
      | expr ',' expr           { $$ = new pwn::comma_node(LINE, $1, $3); }
-     | tIDENTIFIER '(' args_opt ')' { $$ = new pwn::function_call_node(LINE, $1, $3); }
      ;
 
 expr_opt : expr                { $$ = $1; }
