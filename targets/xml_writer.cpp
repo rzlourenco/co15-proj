@@ -53,6 +53,9 @@ void pwn::xml_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
 void pwn::xml_writer::do_addressof_node(pwn::addressof_node * const node, int lvl) {
   process_unary_expression(node, lvl);
 }
+void pwn::xml_writer::do_identity_node(pwn::identity_node * const node, int lvl) {
+  process_unary_expression(node, lvl);
+}
 
 //---------------------------------------------------------------------------
 
@@ -105,6 +108,9 @@ void pwn::xml_writer::do_or_node(pwn::or_node * const node, int lvl) {
 void pwn::xml_writer::do_and_node(pwn::and_node * const node, int lvl) {
   process_binary_expression(node, lvl);
 }
+void pwn::xml_writer::do_comma_node(pwn::comma_node * const node, int lvl) {
+  process_binary_expression(node, lvl);
+}
 
 void pwn::xml_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
   // CHECK_TYPES...
@@ -124,7 +130,8 @@ void pwn::xml_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {
       std::make_tuple(
         std::make_pair("initializer", node->initializer()),
         std::make_pair("condition", node->condition()),
-        std::make_pair("increment", node->increment())));
+        std::make_pair("increment", node->increment()),
+        std::make_pair("body", node->body())));
 }
 void pwn::xml_writer::do_return_node(pwn::return_node * const node, int lvl) {
   write_element(node, lvl);
@@ -163,6 +170,8 @@ void pwn::xml_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
 
   write_element(node, lvl);
 }
+
+
 
 //---------------------------------------------------------------------------
 
