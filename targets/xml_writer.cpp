@@ -1,4 +1,4 @@
-// $Id: xml_writer.cpp,v 1.5 2015/04/08 10:23:35 ist176133 Exp $ -*- c++ -*-
+// $Id: xml_writer.cpp,v 1.7 2015/04/13 17:20:26 ist176133 Exp $ -*- c++ -*-
 #include <string>
 #include "targets/xml_writer.h"
 #include "targets/type_checker.h"
@@ -179,6 +179,7 @@ void pwn::xml_writer::do_function_decl_node(pwn::function_decl_node * const node
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("import", node->import()),
+        std::make_pair("return_type", *(node->return_type())),
         std::make_pair("name", node->name())),
       std::make_tuple(
         std::make_pair("parameters", node->parameters())));
@@ -188,6 +189,7 @@ void pwn::xml_writer::do_function_def_node(pwn::function_def_node * const node, 
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("import", node->import()),
+        std::make_pair("return_type", *(node->return_type())),
         std::make_pair("name", node->name())),
       std::make_tuple(
         std::make_pair("parameters", node->parameters()),

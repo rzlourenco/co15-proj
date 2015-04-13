@@ -1,4 +1,4 @@
-// $Id: xml_writer.h,v 1.5 2015/04/08 10:23:35 ist176133 Exp $ -*- c++ -*-
+// $Id: xml_writer.h,v 1.6 2015/04/12 23:09:18 ist175537 Exp $ -*- c++ -*-
 #ifndef __PWN_SEMANTICS_XMLWRITER_H__
 #define __PWN_SEMANTICS_XMLWRITER_H__
 
@@ -171,6 +171,8 @@ namespace pwn {
     void do_index_node(pwn::index_node * const node, int lvl);
     void do_identifier_node(pwn::identifierrr_node * const node, int lvl);
     void do_noob_node(pwn::noob_node * const node, int lvl);
+    void do_identity_node(pwn::identity_node * const node, int lvl);
+    void do_comma_node(pwn::comma_node * const node, int lvl);
 
   public:
     void do_if_node(cdk::if_node * const node, int lvl);
