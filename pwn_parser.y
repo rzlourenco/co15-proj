@@ -46,7 +46,7 @@
 %nonassoc tUNARY
 %nonassoc '['
 
-%type <node> stmt program decl var_decl func_decl 
+%type <node> stmt program decl var_decl func_decl block
 %type <sequence> statements declarations params params_opt args args_opt var_decls
 %type <expression> expr expr_opt
 %type <lvalue> lval
@@ -81,11 +81,14 @@ func_decl : visibility type tIDENTIFIER '(' params_opt ')'
               { $$ = new pwn::function_decl_node(LINE, $1, $2, $3, $5); }
           | visibility type tIDENTIFIER '(' params_opt ')' '=' expr
               { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, nullptr); }
-          | visibility type tIDENTIFIER '(' params_opt ')' '{' statements '}'
-              { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, nullptr, $8); }
-          | visibility type tIDENTIFIER '(' params_opt ')' '=' expr '{' statements '}'
-              { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, $10); }
+          | visibility type tIDENTIFIER '(' params_opt ')' block
+              { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, nullptr, $7); }
+          | visibility type tIDENTIFIER '(' params_opt ')' '=' expr block
+              { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, $9); }
           ;
+
+block : '{' var_decls statements '}'            { $$ = new pwn::block_node(LINE, $2, $3); }
+      ;
 
 params : var_decl            { $$ = new cdk::sequence_node(LINE, $1); }
        | params ',' var_decl { $$ = new cdk::sequence_node(LINE, $3, $1); }
@@ -117,7 +120,7 @@ stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1
      | expr tPRINT                      { $$ = new pwn::print_node(LINE, $1, true); }
      | tIF '(' expr ')' stmt %prec tIFX { $$ = new cdk::if_node(LINE, $3, $5); }
      | tIF '(' expr ')' stmt tELSE stmt { $$ = new cdk::if_else_node(LINE, $3, $5, $7); }
-     | '{' var_decls statements '}'	{ $$ = new pwn::block_node(LINE, $2, $3); }
+     | block                            { $$ = $1; }
      | tRETURN                          { $$ = new pwn::return_node(LINE); }
      | tSTOP ';'                        { $$ = new pwn::stop_node(LINE, 1);}
      | tNEXT ';'                        { $$ = new pwn::next_node(LINE, 1);}
