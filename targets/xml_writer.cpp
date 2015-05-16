@@ -8,6 +8,8 @@
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   open_element(node, lvl, std::make_pair("size", node->size()));
 
   for (size_t i = 0; i < node->size(); i++) {
@@ -20,21 +22,27 @@ void pwn::xml_writer::do_sequence_node(cdk::sequence_node * const node, int lvl)
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_simple(node, lvl);
 }
 
 void pwn::xml_writer::do_double_node(cdk::double_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_simple(node, lvl);
 }
 
 void pwn::xml_writer::do_string_node(cdk::string_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_simple(node, lvl);
 }
 
 //---------------------------------------------------------------------------
 
 inline void pwn::xml_writer::process_unary_expression(cdk::unary_expression_node * const node, int lvl) {
-  //CHECK_TYPES(_compiler, _symtab, node);
+  CHECK_TYPES(_compiler, _symtab, node);
 
   open_element(node, lvl);
   node->argument()->accept(this, lvl + 2);
@@ -60,7 +68,7 @@ void pwn::xml_writer::do_identity_node(pwn::identity_node * const node, int lvl)
 //---------------------------------------------------------------------------
 
 inline void pwn::xml_writer::process_binary_expression(cdk::binary_expression_node * const node, int lvl) {
-  // CHECK_TYPES(_compiler, _symtab, node);
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(),
@@ -113,7 +121,7 @@ void pwn::xml_writer::do_comma_node(pwn::comma_node * const node, int lvl) {
 }
 
 void pwn::xml_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
-  // CHECK_TYPES...
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(
@@ -123,7 +131,7 @@ void pwn::xml_writer::do_function_call_node(pwn::function_call_node * const node
 }
 
 void pwn::xml_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {
-  //CHECK_TYPES...
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(),
@@ -134,22 +142,28 @@ void pwn::xml_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {
         std::make_pair("body", node->body())));
 }
 void pwn::xml_writer::do_return_node(pwn::return_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl);
 }
 void pwn::xml_writer::do_next_node(pwn::next_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("next", node->next())),
       std::make_tuple());
 }
 void pwn::xml_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("stop", node->stop())),
       std::make_tuple());
 }
 void pwn::xml_writer::do_index_node(pwn::index_node * const node, int lvl) {
-  //CHECK_TYPES...
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(),
@@ -158,7 +172,7 @@ void pwn::xml_writer::do_index_node(pwn::index_node * const node, int lvl) {
         std::make_pair("index", node->index())));
 }
 void pwn::xml_writer::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
-  //CHECK_TYPES...
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(
@@ -166,7 +180,7 @@ void pwn::xml_writer::do_identifier_node(pwn::identifierrr_node * const node, in
       std::make_tuple());
 }
 void pwn::xml_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
-  //CHECK_TYPES...
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl);
 }
@@ -176,6 +190,8 @@ void pwn::xml_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("import", node->import()),
@@ -186,6 +202,8 @@ void pwn::xml_writer::do_function_decl_node(pwn::function_decl_node * const node
 }
 
 void pwn::xml_writer::do_function_def_node(pwn::function_def_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("import", node->import()),
@@ -198,6 +216,8 @@ void pwn::xml_writer::do_function_def_node(pwn::function_def_node * const node, 
 }
 
 void pwn::xml_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("import", node->import()),
@@ -210,7 +230,8 @@ void pwn::xml_writer::do_variable_node(pwn::variable_node * const node, int lvl)
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_rvalue_node(pwn::rvalue_node * const node, int lvl) {
-  //CHECK_TYPES(_compiler, _symtab, node);
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(),
       std::make_tuple(
@@ -219,14 +240,8 @@ void pwn::xml_writer::do_rvalue_node(pwn::rvalue_node * const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
-void pwn::xml_writer::do_lvalue_node(pwn::lvalue_node * const node, int lvl) {
-  throw 42;
-}
-
-//---------------------------------------------------------------------------
-
 void pwn::xml_writer::do_assignment_node(pwn::assignment_node * const node, int lvl) {
-  //CHECK_TYPES(_compiler, _symtab, node);
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(),
@@ -238,7 +253,7 @@ void pwn::xml_writer::do_assignment_node(pwn::assignment_node * const node, int 
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_evaluation_node(pwn::evaluation_node * const node, int lvl) {
-  //CHECK_TYPES(_compiler, _symtab, node);
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(),
@@ -247,7 +262,7 @@ void pwn::xml_writer::do_evaluation_node(pwn::evaluation_node * const node, int 
 }
 
 void pwn::xml_writer::do_print_node(pwn::print_node * const node, int lvl) {
-  //CHECK_TYPES(_compiler, _symtab, node);
+  CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
       std::make_tuple(
@@ -259,6 +274,8 @@ void pwn::xml_writer::do_print_node(pwn::print_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_read_node(pwn::read_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(),
       std::make_tuple());
@@ -267,7 +284,8 @@ void pwn::xml_writer::do_read_node(pwn::read_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_if_node(cdk::if_node * const node, int lvl) {
-  //CHECK_TYPES...
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(),
       std::make_tuple(
@@ -276,7 +294,8 @@ void pwn::xml_writer::do_if_node(cdk::if_node * const node, int lvl) {
 }
 
 void pwn::xml_writer::do_if_else_node(cdk::if_else_node * const node, int lvl) {
-  //CHECK_TYPES...
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(),
       std::make_tuple(
@@ -286,6 +305,8 @@ void pwn::xml_writer::do_if_else_node(cdk::if_else_node * const node, int lvl) {
 }
 
 void pwn::xml_writer::do_block_node(pwn::block_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   write_element(node, lvl,
       std::make_tuple(),
       std::make_tuple(
