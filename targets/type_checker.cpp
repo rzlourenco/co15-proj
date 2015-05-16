@@ -305,10 +305,14 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
     }
   }
 
-  _symtab.insert(id, std::make_shared<pwn::symbol>(node->type(), id, 0));
+  _symtab.insert(id, std::make_shared<pwn::symbol>(node->type(), id));
 }
 
 void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node, int lvl) {
+  if (node->import()) {
+    throw std::string("cannot define import function ") + node->name();
+  }
+
   if (node->default_return() != nullptr) {
     node->default_return()->accept(this, lvl+2);
 
@@ -317,14 +321,59 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
     }
   }
 
-  const std::string &id = node->name();
-  std::shared_ptr<pwn::symbol> symb;
-  if (_symtab.find(id) != nullptr) {
-    
+  if (node->parameters() != nullptr) {
+    node->parameters()->accept(this, lvl+2);
   }
+
+  // DAVID: horrible hack
+  const std::string &id = "." + node->name();
+  std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
+  if (symb != nullptr) {
+    if (symb->definition()) {
+      throw std::string("more than one definition for function ") + node->name();
+    }
+    if (symb->import()) {
+      throw std::string("cannot define import function ") + node->name();
+    }
+    if (!pwn::is_same_raw_type(symb->type(), node->return_type())) {
+      throw std::string("function ") + node->name() + " has already been declared with different return type";
+    }
+    if (symb->argument_types() != get_argument_types(node)) {
+      throw std::string("function ") + node->name() + " has already been declared with different argument types";
+    }
+  } else { 
+    symb = std::make_shared<pwn::symbol>(node->return_type(), id, get_argument_types(node));
+  }
+
+  symb->definition(true);
+  _symtab.insert(id, sybm);
 }
 
 void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
+  if (node->parameters() != nullptr) {
+    node->parameters()->accept(this, lvl+2);
+  }
+
+  // DAVID: horrible hack
+  const std::string &id = "." + node->name();
+  std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
+  if (symb != nullptr) {
+    if (symb->import() != node->import()) {
+      throw node->name() + std::string(" is both import and local");
+    }
+    if (!pwn::is_same_raw_type(symb->type(), node->return_type())) {
+      throw std::string("function ") + node->name() + " has already been declared with different return type";
+    }
+    if (symb->argument_types() != get_argument_types(node)) {
+      throw std::string("function ") + node->name() + " has already been declared with different argument types";
+    }
+  } else { 
+    symb = std::make_shared<pwn::symbol>(node->return_type(), id, get_argument_types(node));
+  }
+
+  symb->definition(false);
+  symb->import(node->import());
+  _symtab.insert(id, sybm);
 }
 
 /*

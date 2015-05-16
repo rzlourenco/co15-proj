@@ -17,6 +17,21 @@ namespace pwn {
     return new basic_type(type_size, type);
   }
 
+  std::vector<type_t> get_argument_types(const function_def_node *node) {
+    std::vector<type_t> ret;
+
+    if (node->parameters() == nullptr) {
+      return ret;
+    }
+
+    for (auto p : node->parameters()->nodes()) {
+      const variable_node *param = (const variable_node *)p;
+      // TODO
+    }
+
+    return ret;
+  }
+
   basic_type *make_const_type(basic_type *base_type) {
     return new basic_type(base_type->size(), base_type->name() | pwn_type::TYPE_CONST);
   }

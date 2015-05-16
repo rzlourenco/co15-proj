@@ -80,10 +80,10 @@ var_decls : 					{ $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
 
 func_decl : visibility type tIDENTIFIER '(' params_opt ')' 
               { $$ = new pwn::function_decl_node(LINE, $1, $2, $3, $5); }
-          | visibility type tIDENTIFIER '(' params_opt ')' '=' expr
-              { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, nullptr); }
           | visibility type tIDENTIFIER '(' params_opt ')' block
               { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, nullptr, $7); }
+          | visibility type tIDENTIFIER '(' params_opt ')' '=' expr
+              { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, nullptr); }
           | visibility type tIDENTIFIER '(' params_opt ')' '=' expr block
               { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, $9); }
           ;

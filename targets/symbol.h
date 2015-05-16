@@ -4,35 +4,37 @@
 
 #include <string>
 #include <cdk/basic_type.h>
+#include "type_utils.h"
 
 namespace pwn {
 
     class symbol {
       const basic_type *_type;
       std::string _name;
-      long _value; // hack!
+      const std::vector<type_t> _argtypes;
+      bool _function;
+      bool _import;
+      bool _definition;
 
     public:
-      inline symbol(const basic_type *type, const std::string &name, long value) :
-          _type(type), _name(name), _value(value) {
-      }
+      inline symbol(const basic_type *type, const std::string &name)
+          : symbol(type, name, std::vector<type_t>()), _function(false) { }
 
-      virtual ~symbol() {
-        delete _type;
-      }
+      inline symbol(const basic_type *type, const std::string &name, const std::vector<type_t> &argtypes)
+          : _type(type), _name(name), _argtypes(argtypes), _function(true) { }
 
-      inline const basic_type *type() const {
-        return _type;
-      }
-      inline const std::string &name() const {
-        return _name;
-      }
-      inline long value() const {
-        return _value;
-      }
-      inline long value(long v) {
-        return _value = v;
-      }
+      bool import() const { return _import; }
+      void import(bool newimport) { _import = newimport; }
+      bool definition() const { return _definition; }
+      void definition(bool newdef) { _definition = newdef; }
+      bool function() const { return _function; }
+
+      const std::vector<type_t> &argument_types() const { return _argtypes; }
+
+      virtual ~symbol() { delete _type; }
+
+      inline const basic_type *type() const { return _type; }
+      inline const std::string &name() const { return _name; }
     };
 
 } // pwn
