@@ -8,9 +8,9 @@
 #include <cdk/ast/basic_node.h>
 #include "targets/symbol.h"
 #include "targets/basic_ast_visitor.h"
+#include "type_utils.h"
 
 namespace pwn {
-
   /**
    * Print nodes as XML elements to the output stream.
    */
@@ -31,10 +31,11 @@ namespace pwn {
     void do_sequence_node(cdk::sequence_node * const node, int lvl) {
     }
 
-  protected:
-    template<typename T>
-    void processSimple(cdk::simple_value_node<T> * const node, int lvl) {
-    }
+  private:
+    void assert_bin_args(cdk::binary_expression_node *const node, const std::vector<type_t> &types);
+    void do_arithmetic_binary_expression(cdk::binary_expression_node *const node);
+    void do_comparison_binary_expression(cdk::binary_expression_node * const node);
+    void do_logic_binary_expression(cdk::binary_expression_node * const node);
 
   public:
     void do_integer_node(cdk::integer_node * const node, int lvl);
@@ -42,14 +43,8 @@ namespace pwn {
     void do_double_node(cdk::double_node * const node, int lvl);
     void do_noob_node(pwn::noob_node * const node, int lvl);
 
-  protected:
-    void processUnaryExpression(cdk::unary_expression_node * const node, int lvl);
-
   public:
     void do_neg_node(cdk::neg_node * const node, int lvl);
-
-  protected:
-    void processBinaryExpression(cdk::binary_expression_node * const node, int lvl);
 
   public:
     void do_add_node(cdk::add_node * const node, int lvl);
@@ -80,13 +75,11 @@ namespace pwn {
 
 
   public:
-    void do_while_node(cdk::while_node * const node, int lvl);
     void do_if_node(cdk::if_node * const node, int lvl);
     void do_if_else_node(cdk::if_else_node * const node, int lvl);
     void do_block_node(pwn::block_node * const node, int lvl); 
 
   public:
-    void do_lvalue_node(pwn::lvalue_node * const node, int lvl);
     void do_rvalue_node(pwn::rvalue_node * const node, int lvl);
 
   public:
@@ -94,6 +87,10 @@ namespace pwn {
     void do_print_node(pwn::print_node * const node, int lvl);
     void do_read_node(pwn::read_node * const node, int lvl);
     void do_assignment_node(pwn::assignment_node * const node, int lvl);
+
+  public:
+    void do_function_def_node(pwn::function_def_node * const node, int lvl);
+    void do_function_decl_node(pwn::function_decl_node * const node, int lvl);
 
   };
 

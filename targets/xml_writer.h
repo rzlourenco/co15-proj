@@ -179,7 +179,6 @@ namespace pwn {
     void do_if_else_node(cdk::if_else_node * const node, int lvl);
 
   public:
-    void do_lvalue_node(pwn::lvalue_node * const node, int lvl);
     void do_rvalue_node(pwn::rvalue_node * const node, int lvl);
 
   public:

@@ -48,7 +48,7 @@
 %nonassoc '['
 
 %type <node> stmt program decl var_decl func_decl block
-%type <sequence> statements declarations params params_opt args args_opt var_decls
+%type <sequence> stmts statements declarations params params_opt args args_opt var_decls
 %type <expression> expr expr_opt
 %type <lvalue> lval
 %type <s> string
@@ -112,8 +112,16 @@ type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
      | '!'          { $$ = pwn::make_type(basic_type::TYPE_VOID); }
      ;
 
-statements :                 { $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
-           | statements stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
+stmts : stmts stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
+      |            { $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
+      ;
+
+statements : stmts tSTOP tINTEGER ';' { $$ = new cdk::sequence_node(LINE, new pwn::stop_node(LINE, $3), $1); }
+           | stmts tSTOP ';'          { $$ = new cdk::sequence_node(LINE, new pwn::stop_node(LINE, 1), $1); }
+           | stmts tNEXT tINTEGER ';' { $$ = new cdk::sequence_node(LINE, new pwn::next_node(LINE, $3), $1); }
+           | stmts tNEXT ';'          { $$ = new cdk::sequence_node(LINE, new pwn::next_node(LINE, 1), $1); }
+           | stmts tRETURN            { $$ = new cdk::sequence_node(LINE, new pwn::return_node(LINE), $1); }
+           | stmts                    { $$ = $1; }
            ;
 
 stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1); }
@@ -122,11 +130,6 @@ stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1
      | tIF '(' expr ')' stmt %prec tIFX { $$ = new cdk::if_node(LINE, $3, $5); }
      | tIF '(' expr ')' stmt tELSE stmt { $$ = new cdk::if_else_node(LINE, $3, $5, $7); }
      | block                            { $$ = $1; }
-     | tRETURN                          { $$ = new pwn::return_node(LINE); }
-     | tSTOP ';'                        { $$ = new pwn::stop_node(LINE, 1);}
-     | tNEXT ';'                        { $$ = new pwn::next_node(LINE, 1);}
-     | tSTOP tINTEGER ';'               { $$ = new pwn::stop_node(LINE, $2);}
-     | tNEXT tINTEGER ';'               { $$ = new pwn::next_node(LINE, $2);}
      | tREPEAT '(' expr_opt ';' expr_opt ';' expr_opt ')' stmt { $$ = new pwn::repeat_node(LINE, $3, $5, $7, $9); }
      ;
 

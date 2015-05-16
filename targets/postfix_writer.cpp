@@ -165,18 +165,10 @@ void pwn::postfix_writer::do_rvalue_node(pwn::rvalue_node * const node, int lvl)
 
 //---------------------------------------------------------------------------
 
-void pwn::postfix_writer::do_lvalue_node(pwn::lvalue_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-  // simplified generation: all variables are global
-  //_pf.ADDR(node->value());
-}
-
-//---------------------------------------------------------------------------
-
 void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
-  // DAVID: horrible hack!
+  // DAVID: horrible hack! topkek
   // (this is caused by Simple not having explicit variable declarations)
     const std::string id;
   /*const std::string &id = node->lvalue()->value()*/;
