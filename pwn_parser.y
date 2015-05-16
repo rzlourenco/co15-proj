@@ -47,13 +47,13 @@
 %nonassoc tUNARY
 %nonassoc '['
 
-%type <node> stmt program decl var_decl func_decl block
-%type <sequence> stmts statements declarations params params_opt args args_opt var_decls
+%type <node> stmt program decl var_decl func_decl block local_var_decl param
+%type <sequence> stmts statements declarations params params_opt args args_opt local_var_decls
 %type <expression> expr expr_opt
 %type <lvalue> lval
 %type <s> string
-%type <t> type
-%type <b> visibility
+%type <t> type raw_type
+%type <b> visibility local_opt
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -71,46 +71,64 @@ decl : var_decl ';'  { $$ = $1; }
      | func_decl { $$ = $1; }
      ;
 
-var_decl : visibility type tIDENTIFIER          { $$ = new pwn::variable_node(LINE, $1, $2, $3, nullptr); }
-         | visibility type tIDENTIFIER '=' expr { $$ = new pwn::variable_node(LINE, $1, $2, $3, $5); }
+var_decl : local_var_decl			{ $$ = $1; }
+	 | tIMPORT   type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, true, $2, $3, nullptr); }
          ;
 
-var_decls : 					{ $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
-	  | var_decls var_decl ';'		{ $$ = new cdk::sequence_node(LINE, $2, $1); }
+local_var_decl 	: local_opt type tIDENTIFIER          	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, nullptr); }
+		| local_opt type tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, $5); }
 
-func_decl : visibility type tIDENTIFIER '(' params_opt ')' 
+local_var_decls : 					{ $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
+	  	| local_var_decls local_var_decl ';'	{ $$ = new cdk::sequence_node(LINE, $2, $1); }
+
+func_decl : local_opt raw_type tIDENTIFIER '(' params_opt ')' 
               { $$ = new pwn::function_decl_node(LINE, $1, $2, $3, $5); }
-          | visibility type tIDENTIFIER '(' params_opt ')' block
+	  | local_opt '!'      tIDENTIFIER '(' params_opt ')'
+              { $$ = new pwn::function_decl_node(LINE, $1, pwn::make_type(basic_type::TYPE_VOID), $3, $5); }
+	  | tIMPORT   raw_type tIDENTIFIER '(' params_opt ')' 
+              { $$ = new pwn::function_decl_node(LINE, true, $2, $3, $5); } /*
+*/
+          | local_opt type tIDENTIFIER '(' params_opt ')' block
               { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, nullptr, $7); }
-          | visibility type tIDENTIFIER '(' params_opt ')' '=' expr
+          | local_opt '!' tIDENTIFIER '(' params_opt ')' block
+              { $$ = new pwn::function_def_node(LINE, $1, pwn::make_type(basic_type::TYPE_VOID), $3, $5, nullptr, $7); } /*
+*/
+          | local_opt type tIDENTIFIER '(' params_opt ')' '=' expr
               { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, nullptr); }
-          | visibility type tIDENTIFIER '(' params_opt ')' '=' expr block
+          | local_opt type tIDENTIFIER '(' params_opt ')' '=' expr block
               { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, $8, $9); }
           ;
 
-block : '{' var_decls statements '}'            { $$ = new pwn::block_node(LINE, $2, $3); }
+block : '{' local_var_decls statements '}'            { $$ = new pwn::block_node(LINE, $2, $3); }
       ;
-
-params : var_decl            { $$ = new cdk::sequence_node(LINE, $1); }
-       | params ',' var_decl { $$ = new cdk::sequence_node(LINE, $3, $1); }
-       ;
 
 params_opt : params          { $$ = $1; }
            |                 { $$ = nullptr; }
            ;
 
-visibility : tLOCAL  { $$ = false; }
-           | tIMPORT { $$ = true; }
-           |         { $$ = false; }
+params : param			{ $$ = new cdk::sequence_node(LINE, $1); }
+       | params ',' param	{ $$ = new cdk::sequence_node(LINE, $3, $1); }
+       ;
+
+param  : raw_type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, false, $1, $2, nullptr);}
+       ;
+
+
+
+local_opt  : tLOCAL { $$ = false; }
+	   |        { $$ = false; }
            ;
 
-type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
-     | '%'          { $$ = pwn::make_type(basic_type::TYPE_DOUBLE); }
-     | '$'          { $$ = pwn::make_type(basic_type::TYPE_STRING); }
-     | '*'          { $$ = pwn::make_type(basic_type::TYPE_POINTER); }
-     | '<' type '>' { $$ = pwn::make_const_type($2); } 
-     | '!'          { $$ = pwn::make_type(basic_type::TYPE_VOID); }
+type : raw_type		{$$ = $1;}
+     | '<' raw_type '>' { $$ = pwn::make_const_type($2); } 
      ;
+
+raw_type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
+	 | '%'          { $$ = pwn::make_type(basic_type::TYPE_DOUBLE); }
+     	 | '$'          { $$ = pwn::make_type(basic_type::TYPE_STRING); }
+     	 | '*'          { $$ = pwn::make_type(basic_type::TYPE_POINTER); }
+	 ;
+ 
 
 stmts : stmts stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
       |            { $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
