@@ -2,6 +2,7 @@
 #include <string>
 #include "targets/type_checker.h"
 #include "ast/all.h"  // automatically generated
+#include "type_utils.h"
 
 #define ASSERT_UNSPEC \
     { if (node->type() != nullptr && \
@@ -13,22 +14,22 @@
 
 void pwn::type_checker::do_integer_node(cdk::integer_node * const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(new basic_type(4, basic_type::TYPE_INT));
+  node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
 void pwn::type_checker::do_string_node(cdk::string_node * const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(new basic_type(4, basic_type::TYPE_STRING));
+  node->type(pwn::make_type(basic_type::TYPE_STRING));
 }
 
 void pwn::type_checker::do_double_node(cdk::double_node * const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+  node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
 }
 
 void pwn::type_checker::do_noob_node(pwn::noob_node * const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(new basic_type(4, basic_type::TYPE_POINTER));
+  node->type(pwn::make_type(basic_type::TYPE_POINTER));
 }
 
 /*
@@ -41,7 +42,7 @@ inline void pwn::type_checker::processUnaryExpression(cdk::unary_expression_node
     throw std::string("wrong type in argument of unary expression");
 
   // in Simple, expressions are always int
-  node->type(new basic_type(4, basic_type::TYPE_INT));
+  node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
 
@@ -50,9 +51,9 @@ void pwn::type_checker::do_identity_node(pwn::identity_node * const node, int lv
 
   auto node_type = node->argument()->type()->name();
   if(node_type == basic_type::TYPE_INT) {
-    node->type(new basic_type(4, basic_type::TYPE_INT));
+    node->type(pwn::make_type(basic_type::TYPE_INT));
   } else if (node_type == basic_type::TYPE_DOUBLE) {
-    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+    node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else {
     throw std::string("wrong type in argument of identity expression");
   }
@@ -63,9 +64,9 @@ void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
 
   auto node_type = node->argument()->type()->name();
   if(node_type == basic_type::TYPE_INT) {
-    node->type(new basic_type(4, basic_type::TYPE_INT));
+    node->type(pwn::make_type(basic_type::TYPE_INT));
   } else if (node_type == basic_type::TYPE_DOUBLE) {
-    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+    node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else {
     throw std::string("wrong type in argument of neg expression");
   }
@@ -74,7 +75,7 @@ void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
 void pwn::type_checker::do_addressof_node(pwn::addressof_node * const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
 
-  node->type(new basic_type(4, basic_type::TYPE_POINTER));
+  node->type(pwn::make_type(basic_type::TYPE_POINTER));
 }
 
 void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
@@ -82,7 +83,7 @@ void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
   if(node->argument()->type()->name() != basic_type::TYPE_INT)
     throw std::string("wrong type in argument of not expression");
 
-  node->type(new basic_type(4, basic_type::TYPE_INT));
+  node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
 void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
@@ -90,7 +91,7 @@ void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
   if(node->argument()->type()->name() != basic_type::TYPE_INT)
     throw std::string("wrong type in argument of alloc expression");
 
-  node->type(new basic_type(4, basic_type::TYPE_POINTER));
+  node->type(pwn::make_type(basic_type::TYPE_POINTER));
 }
 
 
@@ -111,7 +112,7 @@ inline void pwn::type_checker::processBinaryExpression(cdk::binary_expression_no
     throw std::string("wrong type in right argument of binary expression");
 
   // in Simple, expressions are always int
-  node->type(new basic_type(4, basic_type::TYPE_INT));
+  node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
 void pwn::type_checker::do_add_node(cdk::add_node * const node, int lvl) {
@@ -198,7 +199,7 @@ void pwn::type_checker::do_lvalue_node(pwn::lvalue_node * const node, int lvl) {
   std::shared_ptr<pwn::symbol> symbol = _symtab.find(id);
   if (symbol == nullptr) throw id + " undeclared";
   // hackish stuff...
-  node->type(new basic_type(4, basic_type::TYPE_INT));
+  node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
 //---------------------------------------------------------------------------
@@ -211,7 +212,7 @@ void pwn::type_checker::do_assignment_node(pwn::assignment_node * const node, in
     const std::string id;
   /*const std::string &id = node->lvalue()->value();*/
   if (!_symtab.find(id)) {
-    _symtab.insert(id, std::make_shared<pwn::symbol>(new basic_type(4, basic_type::TYPE_INT), id, -1)); // put in the symbol table
+    _symtab.insert(id, std::make_shared<pwn::symbol>(pwn::make_type(basic_type::TYPE_INT), id, -1)); // put in the symbol table
   }
 
   node->lvalue()->accept(this, lvl + 2);
@@ -223,7 +224,7 @@ void pwn::type_checker::do_assignment_node(pwn::assignment_node * const node, in
     throw std::string("wrong type in right argument of assignment expression");
 
   // in Simple, expressions are always int
-  node->type(new basic_type(4, basic_type::TYPE_INT));
+  node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
 //---------------------------------------------------------------------------

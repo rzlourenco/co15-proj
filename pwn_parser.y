@@ -4,6 +4,7 @@
 #include <cdk/compiler.h>
 #include "ast/all.h"
 #include "pwn_type.h"
+#include "type_utils.h"
 #define LINE       compiler->scanner()->lineno()
 #define yylex()    compiler->scanner()->scan()
 #define yyerror(s) compiler->scanner()->error(s)
@@ -103,12 +104,12 @@ visibility : tLOCAL  { $$ = false; }
            |         { $$ = false; }
            ;
 
-type : '#'          { $$ = new basic_type(4, basic_type::TYPE_INT); }
-     | '%'          { $$ = new basic_type(8, basic_type::TYPE_DOUBLE); }
-     | '$'          { $$ = new basic_type(4, basic_type::TYPE_STRING); }
-     | '*'          { $$ = new basic_type(4, basic_type::TYPE_POINTER); }
-     | '<' type '>' { $$ = new basic_type($2->size(), $2->name() | pwn_type::TYPE_CONST); } 
-     | '!'          { $$ = new basic_type(0, basic_type::TYPE_VOID); }
+type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
+     | '%'          { $$ = pwn::make_type(basic_type::TYPE_DOUBLE); }
+     | '$'          { $$ = pwn::make_type(basic_type::TYPE_STRING); }
+     | '*'          { $$ = pwn::make_type(basic_type::TYPE_POINTER); }
+     | '<' type '>' { $$ = pwn::make_const_type($2); } 
+     | '!'          { $$ = pwn::make_type(basic_type::TYPE_VOID); }
      ;
 
 statements :                 { $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
