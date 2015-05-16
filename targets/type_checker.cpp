@@ -8,6 +8,9 @@
     { if (node->type() != nullptr && \
           node->type()->name() != basic_type::TYPE_UNSPEC) return; }
 
+//change to namespace pwn?
+typedef pwn::type_t type_t;
+
 /*
  * literals 
  */
@@ -121,8 +124,6 @@ inline void pwn::type_checker::processBinaryExpression(cdk::binary_expression_no
   node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
-typedef basic_type::type type_t;
-
 inline bool is_type_in_types(type_t type, const std::vector<type_t> &types) {
   for(auto t : types) {
     if (type == t) {
@@ -163,12 +164,12 @@ inline bool check_bin_exp_type(cdk::binary_expression_node *const node, type_t t
 void pwn::type_checker::do_add_node(cdk::add_node * const node, int lvl) {
   assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE, basic_type::TYPE_POINTER});
   if ( check_bin_exp_type(node, basic_type::TYPE_INT)) {
-    node->type(new basic_type(4, basic_type::TYPE_INT));
+    node->type(pwn::make_type(basic_type::TYPE_INT));
   } else if ( check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_DOUBLE)
            || check_bin_exp_type(node, basic_type::TYPE_DOUBLE)) {
-    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+    node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else if (check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_POINTER)) {
-    node->type(new basic_type(4, basic_type::TYPE_POINTER));
+    node->type(pwn::make_type(basic_type::TYPE_POINTER));
   } else {
     throw std::string("wrong type in arguments of add expression");
   }
@@ -178,12 +179,12 @@ void pwn::type_checker::do_add_node(cdk::add_node * const node, int lvl) {
 void pwn::type_checker::do_sub_node(cdk::sub_node * const node, int lvl) {
   assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE, basic_type::TYPE_POINTER});
   if ( check_bin_exp_type(node, basic_type::TYPE_INT)) {
-    node->type(new basic_type(4, basic_type::TYPE_INT));
+    node->type(pwn::make_type(basic_type::TYPE_INT));
   } else if ( check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_DOUBLE)
            || check_bin_exp_type(node, basic_type::TYPE_DOUBLE)) {
-    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+    node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else if (check_bin_exp_type_with_order(node, basic_type::TYPE_POINTER, basic_type::TYPE_INT)) {
-    node->type(new basic_type(4, basic_type::TYPE_POINTER));
+    node->type(pwn::make_type(basic_type::TYPE_POINTER));
   } else {
     throw std::string("wrong type in arguments of sub expression");
   }
@@ -192,10 +193,10 @@ void pwn::type_checker::do_sub_node(cdk::sub_node * const node, int lvl) {
 inline void do_arithmetic_binary_expression(cdk::binary_expression_node *const node) {
   assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE});
   if ( check_bin_exp_type(node, basic_type::TYPE_INT)) {
-    node->type(new basic_type(4, basic_type::TYPE_INT));
+    node->type(pwn::make_type(basic_type::TYPE_INT));
   } else if ( check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_DOUBLE)
            || check_bin_exp_type(node, basic_type::TYPE_DOUBLE)) {
-    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+    node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else {
     throw std::string("wrong type in arguments of ___ expression");
   }
@@ -209,7 +210,7 @@ void pwn::type_checker::do_div_node(cdk::div_node * const node, int lvl) {
 }
 void pwn::type_checker::do_mod_node(cdk::mod_node * const node, int lvl) {
   assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE});
-  node->type(new basic_type(4, basic_type::TYPE_INT));
+  node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
 void pwn::type_checker::do_lt_node(cdk::lt_node * const node, int lvl) {
