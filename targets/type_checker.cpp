@@ -7,7 +7,9 @@
     { if (node->type() != nullptr && \
           node->type()->name() != basic_type::TYPE_UNSPEC) return; }
 
-//---------------------------------------------------------------------------
+/*
+ * literals 
+ */
 
 void pwn::type_checker::do_integer_node(cdk::integer_node * const node, int lvl) {
   ASSERT_UNSPEC;
@@ -19,7 +21,19 @@ void pwn::type_checker::do_string_node(cdk::string_node * const node, int lvl) {
   node->type(new basic_type(4, basic_type::TYPE_STRING));
 }
 
-//---------------------------------------------------------------------------
+void pwn::type_checker::do_double_node(cdk::double_node * const node, int lvl) {
+  ASSERT_UNSPEC;
+  node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+}
+
+void pwn::type_checker::do_noob_node(pwn::noob_node * const node, int lvl) {
+  ASSERT_UNSPEC;
+  node->type(new basic_type(4, basic_type::TYPE_POINTER));
+}
+
+/*
+ * unary expressions
+ */
 
 inline void pwn::type_checker::processUnaryExpression(cdk::unary_expression_node * const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
@@ -30,11 +44,61 @@ inline void pwn::type_checker::processUnaryExpression(cdk::unary_expression_node
   node->type(new basic_type(4, basic_type::TYPE_INT));
 }
 
-void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
-  processUnaryExpression(node, lvl);
+
+void pwn::type_checker::do_identity_node(pwn::identity_node * const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+
+  auto node_type = node->argument()->type()->name();
+  if(node_type == basic_type::TYPE_INT) {
+    node->type(new basic_type(4, basic_type::TYPE_INT));
+  } else if (node_type == basic_type::TYPE_DOUBLE) {
+    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+  } else {
+    throw std::string("wrong type in argument of identity expression");
+  }
 }
 
-//---------------------------------------------------------------------------
+void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+
+  auto node_type = node->argument()->type()->name();
+  if(node_type == basic_type::TYPE_INT) {
+    node->type(new basic_type(4, basic_type::TYPE_INT));
+  } else if (node_type == basic_type::TYPE_DOUBLE) {
+    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+  } else {
+    throw std::string("wrong type in argument of neg expression");
+  }
+}
+
+void pwn::type_checker::do_addressof_node(pwn::addressof_node * const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+
+  node->type(new basic_type(4, basic_type::TYPE_POINTER));
+}
+
+void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+  if(node->argument()->type()->name() != basic_type::TYPE_INT)
+    throw std::string("wrong type in argument of not expression");
+
+  node->type(new basic_type(4, basic_type::TYPE_INT));
+}
+
+void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+  if(node->argument()->type()->name() != basic_type::TYPE_INT)
+    throw std::string("wrong type in argument of alloc expression");
+
+  node->type(new basic_type(4, basic_type::TYPE_POINTER));
+}
+
+
+
+
+/*
+ * binary expressions
+ */
 
 inline void pwn::type_checker::processBinaryExpression(cdk::binary_expression_node * const node, int lvl) {
   ASSERT_UNSPEC;
@@ -89,12 +153,8 @@ void pwn::type_checker::do_or_node(pwn::or_node * const node, int lvl) {
 void pwn::type_checker::do_and_node(pwn::and_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
-  /* implement me*/
-}
+
+
 void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lvl) {
   /* implement me*/
 }
@@ -104,9 +164,7 @@ void pwn::type_checker::do_function_call_node(pwn::function_call_node * const no
 void pwn::type_checker::do_repeat_node(pwn::repeat_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::type_checker::do_addressof_node(pwn::addressof_node * const node, int lvl) {
-  /* implement me*/
-}
+
 void pwn::type_checker::do_return_node(pwn::return_node * const node, int lvl) {
   /* implement me*/
 }
@@ -116,16 +174,14 @@ void pwn::type_checker::do_next_node(pwn::next_node * const node, int lvl) {
 void pwn::type_checker::do_stop_node(pwn::stop_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
-  /* implement me*/
-}
+
 void pwn::type_checker::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
   /* implement me*/
 }
-void pwn::type_checker::do_noob_node(pwn::noob_node * const node, int lvl) {
+
+void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
   /* implement me*/
 }
-
 
 //---------------------------------------------------------------------------
 
