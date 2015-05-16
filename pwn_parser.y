@@ -74,7 +74,7 @@ var_decl : visibility type tIDENTIFIER          { $$ = new pwn::variable_node(LI
          | visibility type tIDENTIFIER '=' expr { $$ = new pwn::variable_node(LINE, $1, $2, $3, $5); }
          ;
 
-var_decls : 					{ $$ = new cdk::nil_node(LINE); }
+var_decls : 					{ $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
 	  | var_decls var_decl ';'		{ $$ = new cdk::sequence_node(LINE, $2, $1); }
 
 func_decl : visibility type tIDENTIFIER '(' params_opt ')' 
@@ -108,7 +108,7 @@ type : '#'          { $$ = new basic_type(4, basic_type::TYPE_INT); }
      | '!'          { $$ = new basic_type(0, basic_type::TYPE_VOID); }
      ;
 
-statements :                 { $$ = new cdk::nil_node(LINE); }
+statements :                 { $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
            | statements stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
            ;
 
