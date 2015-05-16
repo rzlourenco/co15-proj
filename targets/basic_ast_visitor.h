@@ -99,6 +99,7 @@ public:
   virtual void do_variable_node(pwn::variable_node * const node, int lvl) { }
   virtual void do_function_decl_node(pwn::function_decl_node * const node, int lvl) { }
   virtual void do_function_def_node(pwn::function_def_node * const node, int lvl) { }
+  virtual void do_block_node(pwn::block_node * const node, int lvl) { }
 
   virtual void do_repeat_node(pwn::repeat_node * const node, int lvl) { }
   virtual void do_return_node(pwn::return_node * const node, int lvl) { }

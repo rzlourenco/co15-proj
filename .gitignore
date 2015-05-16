@@ -39,3 +39,5 @@ CVS
 .cvsignore
 
 examples/xml/
+examples/
+daily/

@@ -189,6 +189,7 @@ namespace pwn {
     void do_assignment_node(pwn::assignment_node * const node, int lvl);
     void do_function_decl_node(pwn::function_decl_node * const node, int lvl);
     void do_function_def_node(pwn::function_def_node * const node, int lvl);
+    void do_block_node(pwn::block_node * const node, int lvl); 
   };
 
 } // pwn

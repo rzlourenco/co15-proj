@@ -38,16 +38,16 @@
 %right '='
 %left '|'
 %left '&'
-%nonassoc tUNARY2
+%nonassoc '~'
 %left tEQ tNE
 %left tGE tLE '>' '<'
 %left '+' '-'
 %left '*' '/' '%'
 %nonassoc tUNARY
-%nonassoc '[' ']'
+%nonassoc '['
 
 %type <node> stmt program decl var_decl func_decl 
-%type <sequence> statements declarations params params_opt args args_opt
+%type <sequence> statements declarations params params_opt args args_opt var_decls
 %type <expression> expr expr_opt
 %type <lvalue> lval
 %type <s> string
@@ -73,6 +73,9 @@ decl : var_decl ';'  { $$ = $1; }
 var_decl : visibility type tIDENTIFIER          { $$ = new pwn::variable_node(LINE, $1, $2, $3, nullptr); }
          | visibility type tIDENTIFIER '=' expr { $$ = new pwn::variable_node(LINE, $1, $2, $3, $5); }
          ;
+
+var_decls : 					{ $$ = nullptr; }
+	  | var_decls var_decl ';'		{ $$ = new cdk::sequence_node(LINE, $2, $1); }
 
 func_decl : visibility type tIDENTIFIER '(' params_opt ')' 
               { $$ = new pwn::function_decl_node(LINE, $1, $2, $3, $5); }
@@ -114,15 +117,15 @@ stmt : expr ';'                         { $$ = new pwn::evaluation_node(LINE, $1
      | expr tPRINT                      { $$ = new pwn::print_node(LINE, $1, true); }
      | tIF '(' expr ')' stmt %prec tIFX { $$ = new cdk::if_node(LINE, $3, $5); }
      | tIF '(' expr ')' stmt tELSE stmt { $$ = new cdk::if_else_node(LINE, $3, $5, $7); }
-     | '{' statements '}'               { $$ = $2; }
+     | '{' var_decls statements '}'	{ $$ = new pwn::block_node(LINE, $2, $3); }
      | tRETURN                          { $$ = new pwn::return_node(LINE); }
      | tSTOP ';'                        { $$ = new pwn::stop_node(LINE, 1);}
      | tNEXT ';'                        { $$ = new pwn::next_node(LINE, 1);}
      | tSTOP tINTEGER ';'               { $$ = new pwn::stop_node(LINE, $2);}
      | tNEXT tINTEGER ';'               { $$ = new pwn::next_node(LINE, $2);}
      | tREPEAT '(' expr_opt ';' expr_opt ';' expr_opt ')' stmt { $$ = new pwn::repeat_node(LINE, $3, $5, $7, $9); }
-     | var_decl ';'                     { $$ = $1; }                    
      ;
+
 
 expr :/*
 */
@@ -132,7 +135,7 @@ expr :/*
 */
      | '+' expr %prec tUNARY   { $$ = new pwn::identity_node(LINE, $2); }
      | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
-     | lval '?' %prec tUNARY   { $$ = new pwn::addressof_node(LINE, $1); } /*
+     | lval '?' 	       { $$ = new pwn::addressof_node(LINE, $1); } /*
 */
      | expr '*' expr           { $$ = new cdk::mul_node(LINE, $1, $3); }
      | expr '/' expr           { $$ = new cdk::div_node(LINE, $1, $3); }
@@ -149,7 +152,7 @@ expr :/*
      | expr tNE expr           { $$ = new cdk::ne_node(LINE, $1, $3); }
      | expr tEQ expr           { $$ = new cdk::eq_node(LINE, $1, $3); } /*
 */
-     | '~' expr %prec tUNARY2  { $$ = new pwn::not_node(LINE, $2); } /*
+     | '~' expr 	       { $$ = new pwn::not_node(LINE, $2); } /*
 */
      | expr '&' expr           { $$ = new pwn::and_node(LINE, $1, $3); } /*
 */

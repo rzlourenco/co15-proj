@@ -307,3 +307,8 @@ void pwn::postfix_writer::do_if_else_node(cdk::if_else_node * const node, int lv
   node->elseblock()->accept(this, lvl + 2);
   _pf.LABEL(mklbl(lbl1 = lbl2));
 }
+
+//---------------------------------------------------------------------------
+void pwn::postfix_writer::do_block_node(pwn::block_node * const node, int lvl) {
+  /* implement me*/
+}

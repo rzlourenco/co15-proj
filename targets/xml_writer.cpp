@@ -285,3 +285,11 @@ void pwn::xml_writer::do_if_else_node(cdk::if_else_node * const node, int lvl) {
         std::make_pair("else", node->elseblock())));
 }
 
+void pwn::xml_writer::do_block_node(pwn::block_node * const node, int lvl) {
+  write_element(node, lvl,
+      std::make_tuple(),
+      std::make_tuple(
+        std::make_pair("decls", node->decls()),
+        std::make_pair("stmts", node->stmts())));
+}
+

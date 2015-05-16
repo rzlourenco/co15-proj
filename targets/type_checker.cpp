@@ -201,3 +201,7 @@ void pwn::type_checker::do_if_node(cdk::if_node * const node, int lvl) {
 void pwn::type_checker::do_if_else_node(cdk::if_else_node * const node, int lvl) {
   node->condition()->accept(this, lvl + 4);
 }
+
+void pwn::type_checker::do_block_node(pwn::block_node * const node, int lvl) {
+  /* implement me*/
+}

@@ -17,6 +17,7 @@
 WHITESPACE              [ \t\n\r]+
 H                       [0-9a-fA-F]
 INT			0|([1-9][0-9]*)
+D			[0-9]
 %%
 
 "//".*                 ; /* ignore comments */
@@ -58,7 +59,8 @@ INT			0|([1-9][0-9]*)
 {INT}			yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
 0[xX]{H}+		yylval.i = strtol(yytext, nullptr, 16); return tINTEGER;
 
-({INT}\.{INT}?|{INT}?\.{INT})(e[-+]?{INT})? yylval.d = strtod(yytext, nullptr); return tDOUBLE;
+({D}+\.{D}*|{D}*\.{D}+)(e[-+]?{D})?	yylval.d = strtod(yytext, nullptr); return tDOUBLE; /* for .1e2 or 3.e4 or 5.06e7 */
+{D}+e[-+]?{D} 				yylval.d = strtod(yytext, nullptr); return tDOUBLE; /* for 1e2, for example*/
 
 [-()<>=+*/%;{}!@,~&|?\[\]$#]     return *yytext;
 
