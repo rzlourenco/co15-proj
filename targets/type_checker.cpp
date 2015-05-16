@@ -37,6 +37,7 @@ void pwn::type_checker::do_noob_node(pwn::noob_node * const node, int lvl) {
  */
 
 inline void pwn::type_checker::processUnaryExpression(cdk::unary_expression_node * const node, int lvl) {
+  ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
   if (node->argument()->type()->name() != basic_type::TYPE_INT)
     throw std::string("wrong type in argument of unary expression");
@@ -47,6 +48,7 @@ inline void pwn::type_checker::processUnaryExpression(cdk::unary_expression_node
 
 
 void pwn::type_checker::do_identity_node(pwn::identity_node * const node, int lvl) {
+  ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
 
   auto node_type = node->argument()->type()->name();
@@ -60,6 +62,7 @@ void pwn::type_checker::do_identity_node(pwn::identity_node * const node, int lv
 }
 
 void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
+  ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
 
   auto node_type = node->argument()->type()->name();
@@ -73,12 +76,14 @@ void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
 }
 
 void pwn::type_checker::do_addressof_node(pwn::addressof_node * const node, int lvl) {
+  ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
 
   node->type(pwn::make_type(basic_type::TYPE_POINTER));
 }
 
 void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
+  ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
   if(node->argument()->type()->name() != basic_type::TYPE_INT)
     throw std::string("wrong type in argument of not expression");
@@ -87,6 +92,7 @@ void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
 }
 
 void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
+  ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
   if(node->argument()->type()->name() != basic_type::TYPE_INT)
     throw std::string("wrong type in argument of alloc expression");
@@ -115,21 +121,97 @@ inline void pwn::type_checker::processBinaryExpression(cdk::binary_expression_no
   node->type(pwn::make_type(basic_type::TYPE_INT));
 }
 
+typedef basic_type::type type_t;
+
+inline bool is_type_in_types(type_t type, const std::vector<type_t> &types) {
+  for(auto t : types) {
+    if (type == t) {
+      return true;
+    }
+  }
+  return false;
+}
+
+inline void assert_bin_args(cdk::binary_expression_node *const node, const std::vector<type_t> &types) {
+  ASSERT_UNSPEC;
+  auto left_type = node->left()->type()->name();
+  if (is_type_in_types(left_type, types)) {
+    throw std::string("wrong type in left argument of binary expression");
+  }
+
+  auto right_type = node->right()->type()->name();
+  if (is_type_in_types(right_type, types)) {
+    throw std::string("wrong type in right argument of binary expression");
+  }
+}
+
+inline bool check_bin_exp_type_with_order(cdk::binary_expression_node *const node, type_t type1, type_t type2) {
+  auto left_type = node->left()->type()->name();
+  auto right_type = node->right()->type()->name();
+  return (left_type == type1 && right_type == type2);
+}
+
+inline bool check_bin_exp_type(cdk::binary_expression_node *const node, type_t type1, type_t type2) {
+  return check_bin_exp_type_with_order(node, type1, type2)
+      || check_bin_exp_type_with_order(node, type2, type1);
+}
+
+inline bool check_bin_exp_type(cdk::binary_expression_node *const node, type_t type1) {
+  return check_bin_exp_type(node, type1, type1);
+}
+
 void pwn::type_checker::do_add_node(cdk::add_node * const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE, basic_type::TYPE_POINTER});
+  if ( check_bin_exp_type(node, basic_type::TYPE_INT)) {
+    node->type(new basic_type(4, basic_type::TYPE_INT));
+  } else if ( check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_DOUBLE)
+           || check_bin_exp_type(node, basic_type::TYPE_DOUBLE)) {
+    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+  } else if (check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_POINTER)) {
+    node->type(new basic_type(4, basic_type::TYPE_POINTER));
+  } else {
+    throw std::string("wrong type in arguments of add expression");
+  }
 }
+
+//same as the add, but we can't allow to subtraction of int - pointer
 void pwn::type_checker::do_sub_node(cdk::sub_node * const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE, basic_type::TYPE_POINTER});
+  if ( check_bin_exp_type(node, basic_type::TYPE_INT)) {
+    node->type(new basic_type(4, basic_type::TYPE_INT));
+  } else if ( check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_DOUBLE)
+           || check_bin_exp_type(node, basic_type::TYPE_DOUBLE)) {
+    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+  } else if (check_bin_exp_type_with_order(node, basic_type::TYPE_POINTER, basic_type::TYPE_INT)) {
+    node->type(new basic_type(4, basic_type::TYPE_POINTER));
+  } else {
+    throw std::string("wrong type in arguments of sub expression");
+  }
 }
+
+inline void do_arithmetic_binary_expression(cdk::binary_expression_node *const node) {
+  assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE});
+  if ( check_bin_exp_type(node, basic_type::TYPE_INT)) {
+    node->type(new basic_type(4, basic_type::TYPE_INT));
+  } else if ( check_bin_exp_type(node, basic_type::TYPE_INT, basic_type::TYPE_DOUBLE)
+           || check_bin_exp_type(node, basic_type::TYPE_DOUBLE)) {
+    node->type(new basic_type(8, basic_type::TYPE_DOUBLE));
+  } else {
+    throw std::string("wrong type in arguments of ___ expression");
+  }
+}
+
 void pwn::type_checker::do_mul_node(cdk::mul_node * const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  do_arithmetic_binary_expression(node);
 }
 void pwn::type_checker::do_div_node(cdk::div_node * const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  do_arithmetic_binary_expression(node);
 }
 void pwn::type_checker::do_mod_node(cdk::mod_node * const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  assert_bin_args(node, std::vector<type_t>{basic_type::TYPE_INT, basic_type::TYPE_DOUBLE});
+  node->type(new basic_type(4, basic_type::TYPE_INT));
 }
+
 void pwn::type_checker::do_lt_node(cdk::lt_node * const node, int lvl) {
   processBinaryExpression(node, lvl);
 }
