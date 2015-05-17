@@ -3,6 +3,7 @@
 
 #include <cdk/basic_type.h>
 #include <cdk/ast/basic_node.h>
+#include "../scope.h"
 
 namespace pwn {
 
@@ -10,11 +11,11 @@ namespace pwn {
         basic_type *_return_type;
         std::string _name;
         cdk::sequence_node *_parameters;
-        bool _import;
+        scope _scope;
 
     public:
         function_decl_node(int lineno
-                          , bool import
+                          , scope scp
                           , basic_type *return_type
                           , const std::string *name
                           , cdk::sequence_node *parameters)
@@ -22,10 +23,10 @@ namespace pwn {
             , _return_type(return_type)
             , _name(*name)
             , _parameters(parameters)
-            , _import(import) { }
+            , _scope(scp) { }
 
-        bool import() {
-            return _import;
+        scope scp() {
+            return _scope;
         }
 
         basic_type *return_type() {

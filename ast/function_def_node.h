@@ -11,13 +11,13 @@ namespace pwn {
 
     public:
         function_def_node(int lineno
-                         , bool import
+                         , scope scp
                          , basic_type *return_type
                          , const std::string *name
                          , cdk::sequence_node *parameters
                          , cdk::expression_node *default_return
                          , cdk::basic_node *body)
-            : function_decl_node(lineno, import, return_type, name, parameters)
+            : function_decl_node(lineno, scp, return_type, name, parameters)
             , _default_return(default_return)
             , _body(body) { }
 
