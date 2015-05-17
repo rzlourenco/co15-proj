@@ -24,7 +24,7 @@ namespace pwn {
             , _parameters(parameters)
             , _import(import) { }
 
-        bool import() const {
+        bool import() {
             return _import;
         }
 
@@ -32,7 +32,7 @@ namespace pwn {
             return _return_type;
         }
 
-        const std::string &name() const {
+        const std::string &name() {
             return _name;
         }
 

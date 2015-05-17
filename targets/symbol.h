@@ -13,15 +13,18 @@ namespace pwn {
       std::string _name;
       const std::vector<type_t> _argtypes;
       bool _function;
-      bool _import;
-      bool _definition;
+      bool _import {false};
+      bool _definition {false};
+
+      inline symbol(const basic_type *type, const std::string &name, const std::vector<type_t> &argtypes, bool function)
+          : _type(type), _name(name), _argtypes(argtypes), _function(true) { }
 
     public:
       inline symbol(const basic_type *type, const std::string &name)
-          : symbol(type, name, std::vector<type_t>()), _function(false) { }
+          : symbol(type, name, std::vector<type_t>(), false) { }
 
       inline symbol(const basic_type *type, const std::string &name, const std::vector<type_t> &argtypes)
-          : _type(type), _name(name), _argtypes(argtypes), _function(true) { }
+          : symbol(type, name, argtypes, true) { }
 
       bool import() const { return _import; }
       void import(bool newimport) { _import = newimport; }

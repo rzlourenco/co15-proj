@@ -23,16 +23,16 @@ namespace pwn {
     }
 
   public:
-    inline bool import() {
+    inline bool import() const {
       return _import;
     }
-    inline basic_type *type() {
+    inline basic_type *type() const {
       return _type;
     }
-    inline const std::string &identifier() {
+    inline const std::string &identifier() const {
       return _identifier;
     }
-    inline cdk::expression_node *initializer() {
+    inline cdk::expression_node *initializer() const {
       return _initializer;
     }
 

@@ -316,7 +316,7 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
   if (node->default_return() != nullptr) {
     node->default_return()->accept(this, lvl+2);
 
-    if (!pwn::is_same_raw_type(node->initializer()->type(), node->return_type())) {
+    if (!pwn::is_same_raw_type(node->default_return()->type(), node->return_type())) {
       throw std::string("function default return must have same type as return");
     }
   }
@@ -346,7 +346,7 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
   }
 
   symb->definition(true);
-  _symtab.insert(id, sybm);
+  _symtab.insert(id, symb);
 }
 
 void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
@@ -373,7 +373,7 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
 
   symb->definition(false);
   symb->import(node->import());
-  _symtab.insert(id, sybm);
+  _symtab.insert(id, symb);
 }
 
 /*

@@ -173,13 +173,14 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
     const std::string id;
   /*const std::string &id = node->lvalue()->value()*/;
   std::shared_ptr<pwn::symbol> symbol = _symtab.find(id);
-  if (symbol->value() == -1) {
+  //if (symbol->value() == -1) {
+    if(0) {  
     _pf.DATA(); // variables are all global and live in DATA
     _pf.ALIGN(); // make sure we are aligned
     _pf.LABEL(id); // name variable location
     _pf.CONST(0); // initialize it to 0 (zero)
     _pf.TEXT(); // return to the TEXT segment
-    symbol->value(0);
+    //symbol->value(0);
   }
 
   node->rvalue()->accept(this, lvl); // determine the new value
