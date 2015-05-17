@@ -21,6 +21,24 @@ void pwn::postfix_writer::do_integer_node(cdk::integer_node * const node, int lv
   _pf.INT(node->value()); // push an integer
 }
 
+void pwn::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
+  std::string lbl = mklbl();
+
+  _pf.RODATA();
+  _pf.ALIGN();
+  _pf.LABEL(lbl);
+  _pf.DOUBLE(node->value());
+
+  _pf.TEXT();
+  _pf.ALIGN();
+  _pf.ADDR(lbl);
+  _pf.DLOAD();
+}
+
+void pwn::postfix_writer::do_noob_node(cdk::noob_node * const node, int lvl) {
+  _pf.INT(0);
+}
+
 void pwn::postfix_writer::do_string_node(cdk::string_node * const node, int lvl) {
   int lbl1;
 
@@ -32,6 +50,7 @@ void pwn::postfix_writer::do_string_node(cdk::string_node * const node, int lvl)
 
   /* leave the address on the stack */
   _pf.TEXT(); // return to the TEXT segment
+  _pf.ALIGN();
   _pf.ADDR(mklbl(lbl1)); // the string to be printed
 }
 
@@ -40,17 +59,61 @@ void pwn::postfix_writer::do_string_node(cdk::string_node * const node, int lvl)
 void pwn::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->argument()->accept(this, lvl); // determine the value
-  _pf.NEG(); // 2-complement
+  if(is_same_raw_type(node->type()->name(), basic_type::TYPE_INT)) {
+    _pf.NEG(); // 2-complement
+  } else {
+    _pf.DNEG(); // 2-complement
+  }
 }
 
 //---------------------------------------------------------------------------
 
+typedef void (*)(cdk::expression_node *, cdk::expression_node *) binary_function_dispatch;
+
+std::map<std::pair<type_t, type_t>, void (*)()>
+
 void pwn::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.ADD();
+
+  if(is_same_raw_type(node->type(), basic_type::TYPE_INT)) {
+    node->left()->accept(this, lvl + 2);
+    node->right()->accept(this, lvl + 2);
+    _pf.ADD();
+    return;
+  }
+
+  if (is_same_raw_type(node->type(), basic_type::TYPE_POINTER)) {
+    cdk::expression_node *ptr = is_same_raw_type(node->left()->type(), basic_type::TYPE_POINTER)
+      ? node->left()
+      : node->right();
+    cdk::expression_node *incr =
+      is_same_raw_type(node->left()->type(), basic_type::TYPE_INT)
+      ? node->left()
+      : node->right();
+
+    ptr->accept(this, lvl+2);
+    incr->accept(this, lvl+2);
+    _pf.INT(pwn::make_type(basic_type::TYPE_DOUBLE)->size());
+    _pf.MUL();
+    _pf.ADD();
+    return;
+  }
+
+  if(is_same_raw_type(node->type(), basic_type::TYPE_DOUBLE)) {
+    node->left()->accept(this, lvl+2);
+    is_same_raw_type(node->left()->type(), basic_type::TYPE_INT) ? (_pf.I2D(), 0) : 0;
+
+    node->right()->accept(this, lvl+2);
+    is_same_raw_type(node->right()->type(), basic_type::TYPE_INT) ? (_pf.I2D(), 0) : 0;
+
+    _pf.DADD();
+    return;
+  }
+ 
+  assert(false && "type checker is badly done");
 }
+
+
 void pwn::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->left()->accept(this, lvl);

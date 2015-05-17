@@ -41,6 +41,16 @@ namespace pwn {
       return oss.str();
     }
 
+    inline std::string mklbl() {
+      std::ostringstream oss;
+      _lbl++;
+      if (_lbl < 0)
+        oss << ".L" << -_lbl;
+      else
+        oss << "_L" << _lbl;
+      return oss.str();
+    }
+
   public:
     void do_sequence_node(cdk::sequence_node * const node, int lvl);
 

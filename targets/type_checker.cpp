@@ -284,11 +284,11 @@ void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
  */
 
 void pwn::type_checker::do_function_call_node(pwn::function_call_node * const node, int lvl) {
-  const std::string &id = "." + node->name();
+  const std::string &id = "." + node->function();
   
   auto symb = _symtab.find(id);
   if(symb == nullptr) {
-    throw std::string("unknown function in function call: ") + id;
+    throw std::string("unknown function in function call: ") + node->function();
   }
 
   if (node->arguments() != nullptr) {
