@@ -43,7 +43,7 @@ namespace pwn {
   std::vector<type_t> get_argument_types(function_call_node *node) {
     std::vector<type_t> ret;
     
-    if (node == nullptr) {
+    if (node == nullptr || node->arguments() == nullptr) {
       return ret;
     }
 

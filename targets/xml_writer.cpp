@@ -194,7 +194,7 @@ void pwn::xml_writer::do_function_decl_node(pwn::function_decl_node * const node
 
   write_element(node, lvl,
       std::make_tuple(
-        std::make_pair("import", node->import()),
+        std::make_pair("scope", node->scp()),
         std::make_pair("return_type", *(node->return_type())),
         std::make_pair("name", node->name())),
       std::make_tuple(
@@ -206,7 +206,7 @@ void pwn::xml_writer::do_function_def_node(pwn::function_def_node * const node, 
 
   write_element(node, lvl,
       std::make_tuple(
-        std::make_pair("import", node->import()),
+        std::make_pair("scope", node->scp()),
         std::make_pair("return_type", *(node->return_type())),
         std::make_pair("name", node->name())),
       std::make_tuple(
@@ -220,7 +220,7 @@ void pwn::xml_writer::do_variable_node(pwn::variable_node * const node, int lvl)
 
   write_element(node, lvl,
       std::make_tuple(
-        std::make_pair("import", node->import()),
+        std::make_pair("scope", node->scp()),
         std::make_pair("type", *(node->type())),
         std::make_pair("identifier", node->identifier())),
       std::make_tuple(

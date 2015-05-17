@@ -5,38 +5,38 @@
 #include <string>
 #include <cdk/basic_type.h>
 #include "type_utils.h"
+#include "scope.h"
 
 namespace pwn {
 
     class symbol {
-      const basic_type *_type;
+      scope _scope;
+      basic_type *_type;
       std::string _name;
       const std::vector<type_t> _argtypes;
       bool _function;
-      bool _import {false};
-      bool _definition {false};
+      bool _function_definition;
 
-      inline symbol(const basic_type *type, const std::string &name, const std::vector<type_t> &argtypes, bool function)
-          : _type(type), _name(name), _argtypes(argtypes), _function(true) { }
+      inline symbol(scope scp, basic_type *type, const std::string &name, const std::vector<type_t> &argtypes, bool function, bool function_definition)
+          : _scope(scp), _type(type), _name(name), _argtypes(argtypes), _function(function), _function_definition(function_definition) { }
 
     public:
-      inline symbol(const basic_type *type, const std::string &name)
-          : symbol(type, name, std::vector<type_t>(), false) { }
+      inline symbol(scope scp, basic_type *type, const std::string &name)
+          : symbol(scp, type, name, std::vector<type_t>(), false, false) { }
 
-      inline symbol(const basic_type *type, const std::string &name, const std::vector<type_t> &argtypes)
-          : symbol(type, name, argtypes, true) { }
+      inline symbol(scope scp, basic_type *type, const std::string &name, const std::vector<type_t> &argtypes, bool function_definition)
+          : symbol(scp, type, name, argtypes, true, function_definition) { }
 
-      bool import() const { return _import; }
-      void import(bool newimport) { _import = newimport; }
-      bool definition() const { return _definition; }
-      void definition(bool newdef) { _definition = newdef; }
+      scope scp() const { return _scope; }
+      bool function_definition() const { return _function_definition; }
+      void make_definition() { _function_definition = true; }
       bool function() const { return _function; }
 
       const std::vector<type_t> &argument_types() const { return _argtypes; }
 
       virtual ~symbol() { delete _type; }
 
-      inline const basic_type *type() const { return _type; }
+      inline basic_type *type() const { return _type; }
       inline const std::string &name() const { return _name; }
     };
 
