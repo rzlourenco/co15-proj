@@ -55,7 +55,7 @@
 %type <expression> expr expr_opt
 %type <lvalue> lval
 %type <s> string
-%type <t> type 
+%type <t> type raw_type
 %type <scp> local_opt
 
 %{
@@ -70,22 +70,21 @@ declarations : decl              { $$ = new cdk::sequence_node(LINE, $1); }
              | declarations decl { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
 
-decl : var_decl ';'  { $$ = $1; }
-     | func_decl { $$ = $1; }
+decl : var_decl ';'  	{ $$ = $1; }
+     | func_decl 	{ $$ = $1; }
      ;
 
-var_decl : local_opt local_var_decl			{ $$ =  new pwn::variable_node(LINE, $1, $2->type(), $2->identifier(), $2->initializer()); delete $2; }
-	 | tIMPORT '<' type '>' tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::IMPORT, pwn::make_const_type($3), $5, nullptr); }
-	 | tIMPORT     type     tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::IMPORT, $2, $3, nullptr); }
+var_decl : local_opt local_var_decl		{ $$ =  new pwn::variable_node(LINE, $1, $2->type(), $2->identifier(), $2->initializer()); delete $2; }
+	 | tIMPORT   type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::IMPORT, $2, $3, nullptr); }
          ;
 
 local_var_decls : 					{ $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
 	  	| local_var_decls local_var_decl ';'	{ $$ = new cdk::sequence_node(LINE, $2, $1); }
+		;
 
-local_var_decl 	: '<' type '>' tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, pwn::make_const_type($2), $4, nullptr); }
-		|     type     tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, nullptr); }
-		| '<' type '>' tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, pwn::make_const_type($2), $4, $6); }
-		|     type     tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, $4); }
+local_var_decl 	: type tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, nullptr); }
+		| type tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, $4); }
+		;
 
 func_decl : local_opt type tIDENTIFIER '(' params_opt ')' 
               { $$ = new pwn::function_decl_node(LINE, $1, $2, $3, $5); }
@@ -125,11 +124,15 @@ local_opt  : tLOCAL { $$ = pwn::scope::LOCAL; }
 	   |        { $$ = pwn::scope::PUBLIC; }
            ;
 
-type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
-     | '%'          { $$ = pwn::make_type(basic_type::TYPE_DOUBLE); }
-     | '$'          { $$ = pwn::make_type(basic_type::TYPE_STRING); }
-     | '*'          { $$ = pwn::make_type(basic_type::TYPE_POINTER); }
+type :     raw_type	    { $$ = $1;}
+     | '<' raw_type '>'     { $$ = pwn::make_const_type($2);}
      ;
+
+raw_type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
+     	 | '%'          { $$ = pwn::make_type(basic_type::TYPE_DOUBLE); }
+     	 | '$'          { $$ = pwn::make_type(basic_type::TYPE_STRING); }
+     	 | '*'          { $$ = pwn::make_type(basic_type::TYPE_POINTER); }
+     	 ;
  
 
 stmts : stmts stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
