@@ -11,7 +11,7 @@
 using pwn::type_t;
 
 /*
- * literals 
+ * literals
  */
 
 void pwn::type_checker::do_integer_node(cdk::integer_node * const node, int lvl) {
@@ -43,7 +43,7 @@ void pwn::type_checker::do_identifier_node(pwn::identifierrr_node * const node, 
   }
 
   // FIXME: pls gooby-cdk stahp
-  node->type(new basic_type(*symbol->type()));
+  node->type(symbol->type());
 }
 
 /*
@@ -54,10 +54,10 @@ void pwn::type_checker::do_identity_node(pwn::identity_node * const node, int lv
   ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
 
-  auto node_type = node->argument()->type()->name();
-  if(node_type == basic_type::TYPE_INT) {
+  auto node_type = node->argument()->type();
+  if(is_int(node_type)) {
     node->type(pwn::make_type(basic_type::TYPE_INT));
-  } else if (node_type == basic_type::TYPE_DOUBLE) {
+  } else if (is_double(node_type)) {
     node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else {
     throw std::string("wrong type in argument of identity expression");
@@ -68,10 +68,10 @@ void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
   ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
 
-  auto node_type = node->argument()->type()->name();
-  if(node_type == basic_type::TYPE_INT) {
+  auto node_type = node->argument()->type();
+  if (is_int(node_type)) {
     node->type(pwn::make_type(basic_type::TYPE_INT));
-  } else if (node_type == basic_type::TYPE_DOUBLE) {
+  } else if (is_double(node_type) {
     node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else {
     throw std::string("wrong type in argument of neg expression");
@@ -82,7 +82,7 @@ void pwn::type_checker::do_addressof_node(pwn::addressof_node * const node, int 
   ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
 
-  if (!pwn::is_same_raw_type(node->argument()->type(), basic_type::TYPE_DOUBLE)) {
+  if (!is_double(node->argument()->type())) {
     throw std::string("Can't get address of non-real variable");
   }
 
@@ -92,7 +92,7 @@ void pwn::type_checker::do_addressof_node(pwn::addressof_node * const node, int 
 void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
   ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
-  if(node->argument()->type()->name() != basic_type::TYPE_INT)
+  if (!is_int(node->argument()->type()))
     throw std::string("wrong type in argument of not expression");
 
   node->type(pwn::make_type(basic_type::TYPE_INT));
@@ -101,7 +101,7 @@ void pwn::type_checker::do_not_node(pwn::not_node * const node, int lvl) {
 void pwn::type_checker::do_alloc_node(pwn::alloc_node * const node, int lvl) {
   ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
-  if(node->argument()->type()->name() != basic_type::TYPE_INT)
+  if (!is_int(node->argument()->type()))
     throw std::string("wrong type in argument of alloc expression");
 
   node->type(pwn::make_type(basic_type::TYPE_POINTER));
@@ -285,7 +285,7 @@ void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
 
 void pwn::type_checker::do_function_call_node(pwn::function_call_node * const node, int lvl) {
   const std::string &id = "." + node->function();
-  
+
   auto symb = _symtab.find(id);
   if(symb == nullptr) {
     throw std::string("unknown function in function call: ") + node->function();
@@ -353,7 +353,7 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
 
     //function now has a definition
     symb->make_definition();
-  } else { 
+  } else {
     symb = std::make_shared<pwn::symbol>(node->scp(), node->return_type(), id, get_argument_types(node), true);
     _symtab.insert(id, symb);
   }
@@ -378,7 +378,7 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
     if (symb->argument_types() != get_argument_types(node)) {
       throw std::string("function ") + node->name() + " has already been declared with different argument types";
     }
-  } else { 
+  } else {
     symb = std::make_shared<pwn::symbol>(node->scp(), node->return_type(), id, get_argument_types(node), false);
     _symtab.insert(id, symb);
   }

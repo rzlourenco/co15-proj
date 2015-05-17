@@ -1,6 +1,8 @@
 // $Id: postfix_writer.cpp,v 1.5 2015/04/08 10:23:35 ist176133 Exp $ -*- c++ -*-
+#include <cassert>
 #include <string>
 #include <sstream>
+#include <memory>
 #include "targets/type_checker.h"
 #include "targets/postfix_writer.h"
 #include "ast/all.h"  // all.h is automatically generated
@@ -59,7 +61,7 @@ void pwn::postfix_writer::do_string_node(cdk::string_node * const node, int lvl)
 void pwn::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->argument()->accept(this, lvl); // determine the value
-  if(is_same_raw_type(node->type()->name(), basic_type::TYPE_INT)) {
+  if(is_int(node->type())) {
     _pf.NEG(); // 2-complement
   } else {
     _pf.DNEG(); // 2-complement
@@ -68,120 +70,187 @@ void pwn::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
-typedef void (*)(cdk::expression_node *, cdk::expression_node *) binary_function_dispatch;
-
-std::map<std::pair<type_t, type_t>, void (*)()>
-
 void pwn::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
-  if(is_same_raw_type(node->type(), basic_type::TYPE_INT)) {
+  if(is_int(node->type())) {
     node->left()->accept(this, lvl + 2);
     node->right()->accept(this, lvl + 2);
     _pf.ADD();
     return;
   }
 
-  if (is_same_raw_type(node->type(), basic_type::TYPE_POINTER)) {
-    cdk::expression_node *ptr = is_same_raw_type(node->left()->type(), basic_type::TYPE_POINTER)
+  if (is_pointer(node->type())) {
+    cdk::expression_node *ptr =
+      is_pointer(node->left()->type())
       ? node->left()
       : node->right();
     cdk::expression_node *incr =
-      is_same_raw_type(node->left()->type(), basic_type::TYPE_INT)
+      is_int(node->left()->type())
       ? node->left()
       : node->right();
 
     ptr->accept(this, lvl+2);
     incr->accept(this, lvl+2);
-    _pf.INT(pwn::make_type(basic_type::TYPE_DOUBLE)->size());
+
+    auto type = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE));
+    _pf.INT(type->size());
     _pf.MUL();
     _pf.ADD();
     return;
   }
 
-  if(is_same_raw_type(node->type(), basic_type::TYPE_DOUBLE)) {
+  if(is_double(node->type())) {
     node->left()->accept(this, lvl+2);
-    is_same_raw_type(node->left()->type(), basic_type::TYPE_INT) ? (_pf.I2D(), 0) : 0;
+    is_int(node->left()->type()) ? (_pf.I2D(), 0) : 0;
 
     node->right()->accept(this, lvl+2);
-    is_same_raw_type(node->right()->type(), basic_type::TYPE_INT) ? (_pf.I2D(), 0) : 0;
+    is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
 
     _pf.DADD();
     return;
   }
- 
+
   assert(false && "type checker is badly done");
 }
 
-
 void pwn::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.SUB();
+
+  if (is_int(node->type()) && is_int(node->left()->type())) {
+    //both are integers
+    node->left()->accept(this, lvl);
+    node->right()->accept(this, lvl);
+    _pf.SUB();
+    return;
+  }
+
+  if (is_int(node->type()) {
+    //both are pointers
+    node->left()->accept(this, lvl);
+    node->right()->accept(this, lvl);
+    _pf.SUB();
+
+    auto type = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE));
+    _pf.INT(type->size());
+    _pf.DIV();
+    return;
+  }
+
+  if (is_double(node->type())) {
+    node->left()->accept(this, lvl+2);
+    is_int(node->left()->type()) ? (_pf.I2D(), 0) : 0;
+
+    node->right()->accept(this, lvl+2);
+    is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
+
+    _pf.DSUB();
+  }
+
+  if (is_pointer(node->type())) {
+    node->left()->accept(this, lvl+2);
+    node->right()->accept(this, lvl+2);
+
+    // We only have pointers to double
+    auto type = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE));
+    _pf.INT(type->size());
+    _pf.MUL();
+    _pf.SUB();
+    return;
+  }
+
+  assert(false && "typechecker has failed us");
 }
+
 void pwn::postfix_writer::do_mul_node(cdk::mul_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.MUL();
+
+  if (is_int(node->type())) {
+    node->left()->accept(this, lvl);
+    node->right()->accept(this, lvl);
+    _pf.MUL();
+    return;
+  }
+
+  if (is_double(node->type())) {
+    node->left()->accept(this, lvl+2);
+    is_int(node->left()->type()) ? (_pf.I2D(), 0) : 0;
+
+    node->right()->accept(this, lvl+2);
+    is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
+    _pf.MUL();
+    return;
+  }
+
+  assert(false && "typechecker has failed us");
 }
+
 void pwn::postfix_writer::do_div_node(cdk::div_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
+
+  if (is_double(node->type())) {
+    node->left()->accept(this, lvl+2);
+    is_int(node->left()->type()) ? (_pf.I2D(), 0) : 0;
+
+    node->right()->accept(this, lvl+2);
+    is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
+
+    _pf.DDIV();
+  }
+
+  assert(is_int(node->type()) && "div node is neither int nor double");
+
   node->left()->accept(this, lvl);
   node->right()->accept(this, lvl);
   _pf.DIV();
 }
+
 void pwn::postfix_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->left()->accept(this, lvl);
   node->right()->accept(this, lvl);
   _pf.MOD();
 }
+
 void pwn::postfix_writer::do_lt_node(cdk::lt_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.LT();
+  do_ordering_node([&]() { _pf.LT(); });
 }
 void pwn::postfix_writer::do_le_node(cdk::le_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.LE();
+  do_ordering_node([&]() { _pf.LE(); });
 }
 void pwn::postfix_writer::do_ge_node(cdk::ge_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.GE();
+  do_ordering_node([&]() { _pf.GE(); });
 }
 void pwn::postfix_writer::do_gt_node(cdk::gt_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.GT();
+  do_ordering_node([&]() { _pf.GT(); });
 }
+
 void pwn::postfix_writer::do_ne_node(cdk::ne_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.NE();
+  do_equality_node([&]() { _pf.NE(); });
 }
 void pwn::postfix_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.EQ();
+  do_equality_node([&]() { _pf.EQ(); });
 }
+
 void pwn::postfix_writer::do_or_node(pwn::or_node * const node, int lvl) {
-  /* implement me*/
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  node->left()->accept(this, lvl+2);
+  node->right()->accept(this, lvl+2);
+  _pf.OR();
 }
 void pwn::postfix_writer::do_and_node(pwn::and_node * const node, int lvl) {
-  /* implement me*/
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  node->left()->accept(this, lvl+2);
+  node->right()->accept(this, lvl+2);
+  _pf.ADD();
 }
 void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
-  /* implement me*/
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  node->argument()->accept(this, lvl+2);
+  _pf.NOT();
 }
 void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
   /* implement me*/
@@ -237,7 +306,7 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
   /*const std::string &id = node->lvalue()->value()*/;
   std::shared_ptr<pwn::symbol> symbol = _symtab.find(id);
   //if (symbol->value() == -1) {
-    if(0) {  
+    if(0) {
     _pf.DATA(); // variables are all global and live in DATA
     _pf.ALIGN(); // make sure we are aligned
     _pf.LABEL(id); // name variable location

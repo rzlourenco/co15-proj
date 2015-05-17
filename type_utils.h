@@ -20,6 +20,15 @@ namespace pwn {
   bool is_same_raw_type(const basic_type *l, type_t r);
   bool is_same_raw_type(const basic_type *l, const basic_type *r);
 
+  bool is_int(type_t type);
+  bool is_int(const basic_type *type);
+
+  bool is_double(type_t type);
+  bool is_double(const basic_type *type);
+
+  bool is_pointer(type_t type);
+  bool is_pointer(const basic_type *type);
+
   bool is_const_type(type_t type);
   bool is_const_type(basic_type *type);
 }

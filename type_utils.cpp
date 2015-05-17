@@ -29,7 +29,7 @@ namespace pwn {
       const variable_node *param = (const variable_node *)p;
       ret.push_back(param->type()->name());
     }
-    return ret;   
+    return ret;
   }
 
   std::vector<type_t> get_argument_types(function_def_node *node) {
@@ -42,7 +42,7 @@ namespace pwn {
 
   std::vector<type_t> get_argument_types(function_call_node *node) {
     std::vector<type_t> ret;
-    
+
     if (node == nullptr || node->arguments() == nullptr) {
       return ret;
     }
@@ -58,12 +58,12 @@ namespace pwn {
   basic_type *make_const_type(basic_type *base_type) {
     return new basic_type(base_type->size(), base_type->name() | pwn_type::TYPE_CONST);
   }
-  
+
   bool is_same_raw_type(type_t l, type_t r) {
     l = l & ~pwn_type::TYPE_CONST;
     r = r & ~pwn_type::TYPE_CONST;
     return l & r;
-  } 
+  }
   bool is_same_raw_type(type_t l, const basic_type *r) {
     // basic_type->name() isn't const, pls fix cdk
     basic_type _r {*r};
@@ -77,6 +77,27 @@ namespace pwn {
     basic_type _l {*l};
     basic_type _r {*r};
     return is_same_raw_type(_l.name(), _r.name());
+  }
+
+  bool is_int(type_t type) {
+    return is_same_raw_type(type, basic_type::TYPE_INT);
+  }
+  bool is_int(const basic_type *type) {
+    return is_int(type->name());
+  }
+
+  bool is_double(type_t type) {
+    return is_same_raw_type(type, basic_type::TYPE_DOUBLE);
+  }
+  bool is_double(const basic_type *type) {
+    return is_double(type->name());
+  }
+
+  bool is_pointer(type_t type) {
+    return is_same_raw_type(type, basic_type::TYPE_POINTER);
+  }
+  bool is_pointer(const basic_type *type) {
+    return is_pointer(type->name());
   }
 
   bool is_const_type(type_t type) {

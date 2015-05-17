@@ -51,6 +51,53 @@ namespace pwn {
       return oss.str();
     }
 
+    template <typename Func>
+    void do_ordering_node(Func f, cdk::binary_expression_node *node, int lvl) {
+      CHECK_TYPES(_compiler, _symtab, node);
+
+      if (is_int(node->left()->type()) && is_int(node->right()->type())) {
+       node->left()->accept(this, lvl);
+       node->right()->accept(this, lvl);
+       f();
+       return;
+      }
+
+      node->left()->accept(this, lvl+2);
+      is_int(node->left()->type()) ? (_pf.I2D(), 0) : 0;
+
+      node->right()->accept(this, lvl+2);
+      is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
+
+      _pf.DCMP();
+      _pf.INT(0);
+      f();
+      return;
+    }
+
+    template <typename Func>
+    void do_equality_node(Func f, cdk::binary_expression_node *node, int lvl)
+      CHECK_TYPES(_compiler, _symtab, node);
+
+      if (is_same_raw_type(node->left()-type(), node->right()-type())
+          && (is_int(node->left()->type()) || is_pointer(node->left()->type()))) {
+        node->left()->accept(this, lvl+2);
+        node->right()->accept(this, lvl+2);
+
+        f();
+        return;
+      }
+
+      node->left()->accept(this, lvl+2);
+      is_int(node->left()->type()) ? (_pf.I2D(), 0) : 0;
+
+      node->right()->accept(this, lvl+2);
+      is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
+
+      _pf.DCMP();
+      _pf.INT(0);
+      f();
+    }
+
   public:
     void do_sequence_node(cdk::sequence_node * const node, int lvl);
 
@@ -92,7 +139,7 @@ namespace pwn {
     void do_while_node(cdk::while_node * const node, int lvl);
     void do_if_node(cdk::if_node * const node, int lvl);
     void do_if_else_node(cdk::if_else_node * const node, int lvl);
-    void do_block_node(pwn::block_node * const node, int lvl); 
+    void do_block_node(pwn::block_node * const node, int lvl);
 
   public:
     void do_rvalue_node(pwn::rvalue_node * const node, int lvl);
