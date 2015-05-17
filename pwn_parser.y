@@ -1,6 +1,7 @@
 %{
 // $Id: pwn_parser.y,v 1.8 2015/04/12 21:34:14 ist175537 Exp $
 //-- don't change *any* of these: if you do, you'll break the compiler.
+
 #include <cdk/compiler.h>
 #include "ast/all.h"
 #include "pwn_type.h"
@@ -22,7 +23,8 @@
   cdk::expression_node *expression; /* expression nodes */
   pwn::lvalue_node  *lvalue;
   basic_type *t;
-  bool b;
+  pwn::scope scp;
+  pwn::variable_node   *var;
 };
 
 %token <i> tINTEGER
@@ -47,13 +49,14 @@
 %nonassoc tUNARY
 %nonassoc '['
 
-%type <node> stmt program decl var_decl func_decl block local_var_decl param
+%type <node> stmt program decl var_decl func_decl block param
+%type <var> local_var_decl
 %type <sequence> stmts statements declarations params params_opt args args_opt local_var_decls
 %type <expression> expr expr_opt
 %type <lvalue> lval
 %type <s> string
 %type <t> type 
-%type <b> local_opt
+%type <scp> local_opt
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -71,25 +74,25 @@ decl : var_decl ';'  { $$ = $1; }
      | func_decl { $$ = $1; }
      ;
 
-var_decl : local_var_decl				{ $$ = $1; }
-	 | tIMPORT '<' type '>' tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, true, pwn::make_const_type($3), $5, nullptr); }
-	 | tIMPORT     type     tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, true, $2, $3, nullptr); }
+var_decl : local_opt local_var_decl			{ $$ =  new pwn::variable_node(LINE, $1, $2->type(), $2->identifier(), $2->initializer()); delete $2; }
+	 | tIMPORT '<' type '>' tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::IMPORT, pwn::make_const_type($3), $5, nullptr); }
+	 | tIMPORT     type     tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::IMPORT, $2, $3, nullptr); }
          ;
 
 local_var_decls : 					{ $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
 	  	| local_var_decls local_var_decl ';'	{ $$ = new cdk::sequence_node(LINE, $2, $1); }
 
-local_var_decl 	: local_opt '<' type '>' tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, $1, pwn::make_const_type($3), $5, nullptr); }
-		| local_opt     type     tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, nullptr); }
-		| local_opt '<' type '>' tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, $1, pwn::make_const_type($3), $5, $7); }
-		| local_opt     type     tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, $5); }
+local_var_decl 	: '<' type '>' tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, pwn::make_const_type($2), $4, nullptr); }
+		|     type     tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, nullptr); }
+		| '<' type '>' tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, pwn::make_const_type($2), $4, $6); }
+		|     type     tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, $4); }
 
 func_decl : local_opt type tIDENTIFIER '(' params_opt ')' 
               { $$ = new pwn::function_decl_node(LINE, $1, $2, $3, $5); }
 	  | local_opt '!'      tIDENTIFIER '(' params_opt ')'
               { $$ = new pwn::function_decl_node(LINE, $1, pwn::make_type(basic_type::TYPE_VOID), $3, $5); }
 	  | tIMPORT   type tIDENTIFIER '(' params_opt ')' 
-              { $$ = new pwn::function_decl_node(LINE, true, $2, $3, $5); } /*
+              { $$ = new pwn::function_decl_node(LINE, pwn::scope::IMPORT, $2, $3, $5); } /*
 */
           | local_opt type tIDENTIFIER '(' params_opt ')' block
               { $$ = new pwn::function_def_node(LINE, $1, $2, $3, $5, nullptr, $7); }
@@ -113,13 +116,13 @@ params : param			{ $$ = new cdk::sequence_node(LINE, $1); }
        | params ',' param	{ $$ = new cdk::sequence_node(LINE, $3, $1); }
        ;
 
-param  : type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, false, $1, $2, nullptr);}
+param  : type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, nullptr);}
        ;
 
 
 
-local_opt  : tLOCAL { $$ = false; }
-	   |        { $$ = false; }
+local_opt  : tLOCAL { $$ = pwn::scope::LOCAL; }
+	   |        { $$ = pwn::scope::PUBLIC; }
            ;
 
 type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }

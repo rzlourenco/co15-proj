@@ -6,6 +6,7 @@
 #include <string>
 #include <cdk/ast/sequence_node.h>
 #include <cdk/ast/expression_node.h>
+#include "scope.h"
 #include "pwn_scanner.h"
 #include "pwn_parser.tab.h"
 
