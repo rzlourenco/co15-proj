@@ -2,12 +2,15 @@
 #ifndef __PWN_SEMANTICS_PF_WRITER_H__
 #define __PWN_SEMANTICS_PF_WRITER_H__
 
+#include <cassert>
 #include <string>
 #include <iostream>
+#include <cdk/ast/binary_expression_node.h>
 #include <cdk/symbol_table.h>
 #include <cdk/emitters/basic_postfix_emitter.h>
 #include "targets/basic_ast_visitor.h"
 #include "targets/symbol.h"
+#include "targets/type_checker.h"
 
 namespace pwn {
 
@@ -75,10 +78,10 @@ namespace pwn {
     }
 
     template <typename Func>
-    void do_equality_node(Func f, cdk::binary_expression_node *node, int lvl)
+    void do_equality_node(Func f, cdk::binary_expression_node *node, int lvl) {
       CHECK_TYPES(_compiler, _symtab, node);
 
-      if (is_same_raw_type(node->left()-type(), node->right()-type())
+      if (is_same_raw_type(node->left()->type(), node->right()->type())
           && (is_int(node->left()->type()) || is_pointer(node->left()->type()))) {
         node->left()->accept(this, lvl+2);
         node->right()->accept(this, lvl+2);
@@ -104,6 +107,8 @@ namespace pwn {
   public:
     void do_integer_node(cdk::integer_node * const node, int lvl);
     void do_string_node(cdk::string_node * const node, int lvl);
+    void do_double_node(cdk::double_node * const node, int lvl);
+    void do_noob_node(pwn::noob_node * const node, int lvl);
 
   public:
     void do_neg_node(cdk::neg_node * const node, int lvl);
@@ -133,10 +138,11 @@ namespace pwn {
     void do_stop_node(pwn::stop_node * const node, int lvl);
     void do_index_node(pwn::index_node * const node, int lvl);
     void do_identifier_node(pwn::identifierrr_node * const node, int lvl);
-    void do_noob_node(pwn::noob_node * const node, int lvl);
 
   public:
-    void do_while_node(cdk::while_node * const node, int lvl);
+    void do_while_node(cdk::while_node * const node, int lvl) {
+      assert(false && "do_while_node was called!");
+    }
     void do_if_node(cdk::if_node * const node, int lvl);
     void do_if_else_node(cdk::if_else_node * const node, int lvl);
     void do_block_node(pwn::block_node * const node, int lvl);

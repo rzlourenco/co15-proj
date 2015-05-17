@@ -29,6 +29,7 @@ namespace pwn {
       const variable_node *param = (const variable_node *)p;
       ret.push_back(param->type()->name());
     }
+
     return ret;
   }
 
@@ -55,8 +56,9 @@ namespace pwn {
     return ret;
   }
 
-  basic_type *make_const_type(basic_type *base_type) {
-    return new basic_type(base_type->size(), base_type->name() | pwn_type::TYPE_CONST);
+  basic_type *make_const_type(const basic_type *base_type) {
+    basic_type _type { *base_type };
+    return new basic_type(_type.size(), _type.name() | pwn_type::TYPE_CONST);
   }
 
   bool is_same_raw_type(type_t l, type_t r) {
@@ -83,29 +85,33 @@ namespace pwn {
     return is_same_raw_type(type, basic_type::TYPE_INT);
   }
   bool is_int(const basic_type *type) {
-    return is_int(type->name());
+    basic_type _t { *type };
+    return is_int(_t.name());
   }
 
   bool is_double(type_t type) {
     return is_same_raw_type(type, basic_type::TYPE_DOUBLE);
   }
   bool is_double(const basic_type *type) {
-    return is_double(type->name());
+    basic_type _t { *type };
+    return is_double(_t.name());
   }
 
   bool is_pointer(type_t type) {
     return is_same_raw_type(type, basic_type::TYPE_POINTER);
   }
   bool is_pointer(const basic_type *type) {
-    return is_pointer(type->name());
+    basic_type _t { *type };
+    return is_pointer(_t.name());
   }
 
   bool is_const_type(type_t type) {
     return type & pwn_type::TYPE_CONST;
   }
 
-  bool is_const_type(basic_type *type) {
-    return is_const_type(type->name());
+  bool is_const_type(const basic_type *type) {
+    basic_type _t { *type };
+    return is_const_type(_t.name());
   }
 }
 

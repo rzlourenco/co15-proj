@@ -18,7 +18,7 @@ namespace pwn {
     }
 
   public:
-    inline cdk::expression_node *lvalue() {
+    inline pwn::lvalue_node *lvalue() {
       return _lvalue;
     }
 

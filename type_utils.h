@@ -13,7 +13,7 @@ namespace pwn {
   std::vector<type_t> get_argument_types(function_call_node *);
 
   basic_type *make_type(type_t type);
-  basic_type *make_const_type(basic_type *);
+  basic_type *make_const_type(const basic_type *);
 
   bool is_same_raw_type(type_t l, type_t r);
   bool is_same_raw_type(type_t l, const basic_type *r);
@@ -30,6 +30,6 @@ namespace pwn {
   bool is_pointer(const basic_type *type);
 
   bool is_const_type(type_t type);
-  bool is_const_type(basic_type *type);
+  bool is_const_type(const basic_type *type);
 }
 

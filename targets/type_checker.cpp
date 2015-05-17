@@ -35,14 +35,13 @@ void pwn::type_checker::do_noob_node(pwn::noob_node * const node, int lvl) {
 }
 
 void pwn::type_checker::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
-  const std::string &id = node->identifier();
-  std::shared_ptr<pwn::symbol> symbol = _symtab.find(id);
+  auto &id = node->identifier();
+  auto symbol = _symtab.find(id);
 
   if (symbol == nullptr) {
     throw id + " undeclared";
   }
 
-  // FIXME: pls gooby-cdk stahp
   node->type(symbol->type());
 }
 
@@ -71,7 +70,7 @@ void pwn::type_checker::do_neg_node(cdk::neg_node * const node, int lvl) {
   auto node_type = node->argument()->type();
   if (is_int(node_type)) {
     node->type(pwn::make_type(basic_type::TYPE_INT));
-  } else if (is_double(node_type) {
+  } else if (is_double(node_type)) {
     node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else {
     throw std::string("wrong type in argument of neg expression");
@@ -269,10 +268,10 @@ void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
   node->pointer()->accept(this, lvl+2);
   node->index()->accept(this, lvl+2);
 
-  if (!pwn::is_same_raw_type(node->pointer()->type(), basic_type::TYPE_POINTER)) {
+  if (!is_pointer(node->pointer()->type())) {
     throw std::string("Cannot index non-pointer!");
   }
-  if (!pwn::is_same_raw_type(node->index()->type(), basic_type::TYPE_INT)) {
+  if (!is_int(node->index()->type())) {
     throw std::string("Cannot use non-integer indexes!");
   }
 
@@ -284,16 +283,16 @@ void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
  */
 
 void pwn::type_checker::do_function_call_node(pwn::function_call_node * const node, int lvl) {
-  const std::string &id = "." + node->function();
+  auto id = "." + node->function();
 
   auto symb = _symtab.find(id);
-  if(symb == nullptr) {
+  if (symb == nullptr) {
     throw std::string("unknown function in function call: ") + node->function();
   }
 
   if (node->arguments() != nullptr) {
     node->arguments()->accept(this, lvl + 2);
-    if( symb->argument_types() != get_argument_types(node)) {
+    if (symb->argument_types() != get_argument_types(node)) {
       throw std::string("function call arguments mismatch");
     }
   } else if (symb->argument_types().size() > 0) {
@@ -309,26 +308,33 @@ void pwn::type_checker::do_function_call_node(pwn::function_call_node * const no
 
 void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lvl) {
   const std::string &id = node->identifier();
-  if (_symtab.find_local(id) != nullptr) {
+  auto symb = _symtab.find_local(id);
+
+  if (symb != nullptr) {
     throw std::string("duplicate variable declaration");
   }
 
   if (node->initializer() != nullptr) {
     node->initializer()->accept(this, lvl+2);
 
-    if (!pwn::is_same_raw_type(node->initializer()->type(), node->type())) {
+    if (!is_same_raw_type(node->initializer()->type(), node->type())) {
       throw std::string("Variable initializer must have the same type as the variable!");
     }
   }
 
-  _symtab.insert(id, std::make_shared<pwn::symbol>(node->scp(), node->type(), id));
+  switch (node->scp()) {
+  default:
+    break /* my ass */;
+  }
+
+  _symtab.insert(id, symb);
 }
 
 void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   if (node->default_return() != nullptr) {
     node->default_return()->accept(this, lvl+2);
 
-    //TODO: raw_type comparision is probably right because the integer literal has type int but return could be <#>
+    //TODO: raw_type comparison is probably right because the integer literal has type int but return could be <#>
     if (!pwn::is_same_raw_type(node->default_return()->type(), node->return_type())) {
       throw std::string("function default return must have same type as return");
     }
@@ -338,10 +344,10 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
   const std::string &id = "." + node->name();
   std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
   if (symb != nullptr) {
-    if (symb->function_definition()) {
+    if (symb->definition()) {
       throw std::string("more than one definition for function ") + node->name();
     }
-    if (symb->scp() == pwn::scope::IMPORT) {
+    if (symb->scope() == scope::IMPORT) {
       throw std::string("cannot define import function ") + node->name();
     }
     if (symb->type()->name() != node->return_type()->name()) {
@@ -351,10 +357,20 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
       throw std::string("function ") + node->name() + " has already been declared with different argument types";
     }
 
-    //function now has a definition
-    symb->make_definition();
+    symb->definition(true);
   } else {
-    symb = std::make_shared<pwn::symbol>(node->scp(), node->return_type(), id, get_argument_types(node), true);
+    // DAVID: horrible hack
+    switch (node->scp()) {
+    case scope::PUBLIC:
+      symb = make_public_function(node->return_type(), id, get_argument_types(node), id);
+      break;
+    case scope::LOCAL:
+      symb = make_local_function(node->return_type(), id, get_argument_types(node), id);
+      break;
+    default:
+      assert(false);
+    }
+
     _symtab.insert(id, symb);
   }
 
@@ -423,11 +439,11 @@ void pwn::type_checker::do_assignment_node(pwn::assignment_node * const node, in
   }
   if (pwn::is_same_raw_type(node->lvalue()->type(), node->rvalue()->type())) {
     node->type(pwn::make_type(node->rvalue()->type()->name()));
-  } else if (pwn::is_same_raw_type(node->lvalue()->type(), basic_type::TYPE_INT)
-      && pwn::is_same_raw_type(node->rvalue()->type(), basic_type::TYPE_DOUBLE)) {
+  } else if (is_int(node->lvalue()->type())
+      && is_double(node->rvalue()->type())) {
     node->type(pwn::make_type(basic_type::TYPE_INT));
-  } else if (pwn::is_same_raw_type(node->lvalue()->type(), basic_type::TYPE_DOUBLE)
-      && pwn::is_same_raw_type(node->rvalue()->type(), basic_type::TYPE_INT)) {
+  } else if (is_double(node->lvalue()->type())
+      && is_int(node->rvalue()->type())) {
     node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
   } else {
     throw std::string("assignment with incompatible types");

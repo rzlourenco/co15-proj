@@ -11,6 +11,9 @@ std::ostream& operator<<(std::ostream& os, const pwn::scope& scp) {
     case pwn::scope::LOCAL:
       os << "local";
       break;
+    case pwn::scope::BLOCK:
+      os << "block";
+      break;
     }
   return os;
 }

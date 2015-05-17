@@ -3,7 +3,6 @@
 #include <string>
 #include <sstream>
 #include <memory>
-#include "targets/type_checker.h"
 #include "targets/postfix_writer.h"
 #include "ast/all.h"  // all.h is automatically generated
 
@@ -17,7 +16,7 @@ void pwn::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int 
   }
 }
 
-//---------------------------------------------------------------------------
+//------------------- Literals  ---------------------------------------------
 
 void pwn::postfix_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
   _pf.INT(node->value()); // push an integer
@@ -37,7 +36,7 @@ void pwn::postfix_writer::do_double_node(cdk::double_node * const node, int lvl)
   _pf.DLOAD();
 }
 
-void pwn::postfix_writer::do_noob_node(cdk::noob_node * const node, int lvl) {
+void pwn::postfix_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
   _pf.INT(0);
 }
 
@@ -56,24 +55,74 @@ void pwn::postfix_writer::do_string_node(cdk::string_node * const node, int lvl)
   _pf.ADDR(mklbl(lbl1)); // the string to be printed
 }
 
-//---------------------------------------------------------------------------
+void pwn::postfix_writer::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  const std::string &id = node->identifier();
+  auto sym = _symtab.find(id);
+
+  assert(sym != nullptr && "symbol is nullptr");
+
+  // eww
+  if (sym->scope() == scope::BLOCK) {
+    _pf.LOCAL(sym->offset());
+  } else {
+    _pf.ADDR(sym->label());
+  }
+}
+
+//--------------- Unary functions -------------------------------------------
 
 void pwn::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->argument()->accept(this, lvl); // determine the value
-  if(is_int(node->type())) {
+  if (is_int(node->type())) {
     _pf.NEG(); // 2-complement
-  } else {
-    _pf.DNEG(); // 2-complement
+    return;
   }
+
+  if (is_double(node->type())) {
+    _pf.DNEG(); // 2-complement
+    return;
+  }
+
+  assert(false && "typechecker failed");
 }
 
-//---------------------------------------------------------------------------
+// FIXME
+void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+  // $ val
+  node->accept(this, lvl);
+  auto type = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE));
+  // $ val sz
+  _pf.INT(type->size());
+  // $ (val*sz)
+  _pf.MUL();
+  // $ #(val*sz)
+  _pf.ALLOC();
+  // $ #(val*sz) sp
+  _pf.SP();
+
+  //_pf.INT(val)
+  _pf.INT(type->size());
+  _pf.MUL();
+  _pf.ADD();
+}
+
+void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  node->argument()->accept(this, lvl+2);
+  _pf.NOT();
+}
+
+//--------------------- Binary functions ------------------------------------
 
 void pwn::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
-  if(is_int(node->type())) {
+  if (is_int(node->type())) {
     node->left()->accept(this, lvl + 2);
     node->right()->accept(this, lvl + 2);
     _pf.ADD();
@@ -125,7 +174,7 @@ void pwn::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
     return;
   }
 
-  if (is_int(node->type()) {
+  if (is_int(node->type())) {
     //both are pointers
     node->left()->accept(this, lvl);
     node->right()->accept(this, lvl);
@@ -213,23 +262,23 @@ void pwn::postfix_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
 }
 
 void pwn::postfix_writer::do_lt_node(cdk::lt_node * const node, int lvl) {
-  do_ordering_node([&]() { _pf.LT(); });
+  do_ordering_node([&]() { _pf.LT(); }, node, lvl);
 }
 void pwn::postfix_writer::do_le_node(cdk::le_node * const node, int lvl) {
-  do_ordering_node([&]() { _pf.LE(); });
+  do_ordering_node([&]() { _pf.LE(); }, node, lvl);
 }
 void pwn::postfix_writer::do_ge_node(cdk::ge_node * const node, int lvl) {
-  do_ordering_node([&]() { _pf.GE(); });
+  do_ordering_node([&]() { _pf.GE(); }, node, lvl);
 }
 void pwn::postfix_writer::do_gt_node(cdk::gt_node * const node, int lvl) {
-  do_ordering_node([&]() { _pf.GT(); });
+  do_ordering_node([&]() { _pf.GT(); }, node, lvl);
 }
 
 void pwn::postfix_writer::do_ne_node(cdk::ne_node * const node, int lvl) {
-  do_equality_node([&]() { _pf.NE(); });
+  do_equality_node([&]() { _pf.NE(); }, node, lvl);
 }
 void pwn::postfix_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
-  do_equality_node([&]() { _pf.EQ(); });
+  do_equality_node([&]() { _pf.EQ(); }, node, lvl);
 }
 
 void pwn::postfix_writer::do_or_node(pwn::or_node * const node, int lvl) {
@@ -239,63 +288,20 @@ void pwn::postfix_writer::do_or_node(pwn::or_node * const node, int lvl) {
   node->right()->accept(this, lvl+2);
   _pf.OR();
 }
+
 void pwn::postfix_writer::do_and_node(pwn::and_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
   node->left()->accept(this, lvl+2);
   node->right()->accept(this, lvl+2);
-  _pf.ADD();
+  _pf.AND();
 }
-void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
 
-  node->argument()->accept(this, lvl+2);
-  _pf.NOT();
-}
-void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_addressof_node(pwn::addressof_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_return_node(pwn::return_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_next_node(pwn::next_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
-  /* implement me*/
-}
 void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
-  /* implement me*/
-}
-
-
-//---------------------------------------------------------------------------
-
-void pwn::postfix_writer::do_rvalue_node(pwn::rvalue_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  node->lvalue()->accept(this, lvl);
-  _pf.LOAD(); //FIXME: depends on type size
-}
 
-//---------------------------------------------------------------------------
+  /* implement me*/
+}
 
 void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
@@ -319,6 +325,53 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
   _pf.DUP();
   node->lvalue()->accept(this, lvl); // where to store the value
   _pf.STORE(); // store the value at address
+}
+
+// ------------------------ N-ary functions ------------------------------------
+
+void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
+  /* implement me*/
+}
+
+// ------------------------ Declarations ---------------------------------------
+
+void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
+
+  /* implement me*/
+}
+
+void pwn::postfix_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {
+  /* implement me*/
+}
+void pwn::postfix_writer::do_addressof_node(pwn::addressof_node * const node, int lvl) {
+  /* implement me*/
+}
+void pwn::postfix_writer::do_return_node(pwn::return_node * const node, int lvl) {
+  /* implement me*/
+}
+void pwn::postfix_writer::do_next_node(pwn::next_node * const node, int lvl) {
+  /* implement me*/
+}
+void pwn::postfix_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
+  /* implement me*/
+}
+
+//---------------------------------------------------------------------------
+
+void pwn::postfix_writer::do_rvalue_node(pwn::rvalue_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+  node->lvalue()->accept(this, lvl);
+
+  switch (node->type()->size()) {
+    case 8:
+      _pf.DLOAD();
+      break;
+    case 4:
+      _pf.LOAD();
+      break;
+    default:
+      assert(false && "type size not 4 or 8");
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -358,21 +411,16 @@ void pwn::postfix_writer::do_program_node(pwn::program_node * const node, int lv
 void pwn::postfix_writer::do_evaluation_node(pwn::evaluation_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->argument()->accept(this, lvl); // determine the value
-  if (node->argument()->type()->name() == basic_type::TYPE_INT) {
-    _pf.TRASH(4); // delete the evaluated value
-  }
-  else if (node->argument()->type()->name() == basic_type::TYPE_STRING) {
-    _pf.TRASH(4); // delete the evaluated value's address
-  }
-  else {
-    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
-    exit(1);
-  }
+
+  _pf.TRASH(node->argument()->type()->size());
 }
 
 void pwn::postfix_writer::do_print_node(pwn::print_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->argument()->accept(this, lvl); // determine the value to print
+
+  // TODO
+
   if (node->argument()->type()->name() == basic_type::TYPE_INT) {
     _pf.CALL("printi");
     _pf.TRASH(4); // delete the printed value
@@ -396,18 +444,6 @@ void pwn::postfix_writer::do_read_node(pwn::read_node * const node, int lvl) {
   _pf.PUSH();
   //node->argument()->accept(this, lvl);
   _pf.STORE();
-}
-
-//---------------------------------------------------------------------------
-
-void pwn::postfix_writer::do_while_node(cdk::while_node * const node, int lvl) {
-  int lbl1, lbl2;
-  _pf.LABEL(mklbl(lbl1 = ++_lbl));
-  node->condition()->accept(this, lvl);
-  _pf.JZ(mklbl(lbl2 = ++_lbl));
-  node->block()->accept(this, lvl + 2);
-  _pf.JMP(mklbl(lbl1));
-  _pf.LABEL(mklbl(lbl2));
 }
 
 //---------------------------------------------------------------------------

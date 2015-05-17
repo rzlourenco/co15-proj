@@ -4,7 +4,7 @@
 #include <iostream>
 
 namespace pwn {
-  enum class scope { PUBLIC, IMPORT, LOCAL };
+  enum class scope { PUBLIC, IMPORT, LOCAL, BLOCK };
 }
 
 
