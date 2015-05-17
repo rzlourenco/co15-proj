@@ -52,8 +52,8 @@
 %type <expression> expr expr_opt
 %type <lvalue> lval
 %type <s> string
-%type <t> type raw_type
-%type <b> visibility local_opt
+%type <t> type 
+%type <b> local_opt
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -71,21 +71,24 @@ decl : var_decl ';'  { $$ = $1; }
      | func_decl { $$ = $1; }
      ;
 
-var_decl : local_var_decl			{ $$ = $1; }
-	 | tIMPORT   type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, true, $2, $3, nullptr); }
+var_decl : local_var_decl				{ $$ = $1; }
+	 | tIMPORT '<' type '>' tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, true, pwn::make_const_type($3), $5, nullptr); }
+	 | tIMPORT     type     tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, true, $2, $3, nullptr); }
          ;
-
-local_var_decl 	: local_opt type tIDENTIFIER          	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, nullptr); }
-		| local_opt type tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, $5); }
 
 local_var_decls : 					{ $$ = new cdk::sequence_node(LINE, new cdk::nil_node(LINE)); }
 	  	| local_var_decls local_var_decl ';'	{ $$ = new cdk::sequence_node(LINE, $2, $1); }
 
-func_decl : local_opt raw_type tIDENTIFIER '(' params_opt ')' 
+local_var_decl 	: local_opt '<' type '>' tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, $1, pwn::make_const_type($3), $5, nullptr); }
+		| local_opt     type     tIDENTIFIER       	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, nullptr); }
+		| local_opt '<' type '>' tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, $1, pwn::make_const_type($3), $5, $7); }
+		| local_opt     type     tIDENTIFIER '=' expr 	{ $$ = new pwn::variable_node(LINE, $1, $2, $3, $5); }
+
+func_decl : local_opt type tIDENTIFIER '(' params_opt ')' 
               { $$ = new pwn::function_decl_node(LINE, $1, $2, $3, $5); }
 	  | local_opt '!'      tIDENTIFIER '(' params_opt ')'
               { $$ = new pwn::function_decl_node(LINE, $1, pwn::make_type(basic_type::TYPE_VOID), $3, $5); }
-	  | tIMPORT   raw_type tIDENTIFIER '(' params_opt ')' 
+	  | tIMPORT   type tIDENTIFIER '(' params_opt ')' 
               { $$ = new pwn::function_decl_node(LINE, true, $2, $3, $5); } /*
 */
           | local_opt type tIDENTIFIER '(' params_opt ')' block
@@ -110,7 +113,7 @@ params : param			{ $$ = new cdk::sequence_node(LINE, $1); }
        | params ',' param	{ $$ = new cdk::sequence_node(LINE, $3, $1); }
        ;
 
-param  : raw_type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, false, $1, $2, nullptr);}
+param  : type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, false, $1, $2, nullptr);}
        ;
 
 
@@ -119,15 +122,11 @@ local_opt  : tLOCAL { $$ = false; }
 	   |        { $$ = false; }
            ;
 
-type : raw_type		{$$ = $1;}
-     | '<' raw_type '>' { $$ = pwn::make_const_type($2); } 
+type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
+     | '%'          { $$ = pwn::make_type(basic_type::TYPE_DOUBLE); }
+     | '$'          { $$ = pwn::make_type(basic_type::TYPE_STRING); }
+     | '*'          { $$ = pwn::make_type(basic_type::TYPE_POINTER); }
      ;
-
-raw_type : '#'          { $$ = pwn::make_type(basic_type::TYPE_INT); }
-	 | '%'          { $$ = pwn::make_type(basic_type::TYPE_DOUBLE); }
-     	 | '$'          { $$ = pwn::make_type(basic_type::TYPE_STRING); }
-     	 | '*'          { $$ = pwn::make_type(basic_type::TYPE_POINTER); }
-	 ;
  
 
 stmts : stmts stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
