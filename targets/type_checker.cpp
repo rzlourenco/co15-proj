@@ -398,13 +398,13 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
   std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
   if (symb != nullptr) {
     if (symb->scope() != node->scp()) {
-      assert(false && new std::string(node->name() + "declared twich with different scopes"));
+      throw node->name() + std::string(" declared twice with different scopes");
     }
     if (symb->type() != node->return_type()) {
-      assert(false && new std::string("function" + node->name() + "has already been declared with different return type"));
+      throw std::string("function ") + node->name() + " has already been declared with different return type";
     }
     if (symb->argument_types() != get_argument_types(node)) {
-      assert(false && new std::string("function" + node->name() + "has already been declared with different argument types"));
+      throw std::string("function ") + node->name() + " has already been declared with different argument types";
     }
   } else {
     switch(node->scp()) {
