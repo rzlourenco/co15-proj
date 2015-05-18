@@ -9,7 +9,7 @@ namespace pwn {
 
     class function_decl_node : public cdk::basic_node {
         basic_type *_return_type;
-        std::string _name;
+        std::string _function;
         cdk::sequence_node *_parameters;
         scope _scope;
 
@@ -17,11 +17,11 @@ namespace pwn {
         function_decl_node(int lineno
                           , scope scp
                           , basic_type *return_type
-                          , const std::string *name
+                          , const std::string *function
                           , cdk::sequence_node *parameters)
             : cdk::basic_node(lineno)
             , _return_type(return_type)
-            , _name(*name)
+            , _function(*function)
             , _parameters(parameters)
             , _scope(scp) { }
 
@@ -33,8 +33,8 @@ namespace pwn {
             return _return_type;
         }
 
-        const std::string &name() {
-            return _name;
+        const std::string &function() {
+            return _function;
         }
 
         cdk::sequence_node *parameters() {

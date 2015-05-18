@@ -312,7 +312,7 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
   auto symb = _symtab.find_local(id);
 
   if (symb != nullptr) {
-    throw std::string("duplicate variable declaration");
+    throw std::string("duplicate variable declaration: " + id);
   }
 
   if (node->initializer() != nullptr) {
@@ -353,20 +353,20 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
   }
 
   // DAVID: horrible hack
-  const std::string &id = "." + node->name();
+  const std::string &id = "." + node->function();
   std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
   if (symb != nullptr) {
     if (symb->definition()) {
-      throw std::string("more than one definition for function ") + node->name();
+      throw std::string("more than one definition for function ") + node->function();
     }
     if (symb->scope() == scope::IMPORT) {
-      throw std::string("cannot define import function ") + node->name();
+      throw std::string("cannot define import function ") + node->function();
     }
     if (symb->type()->name() != node->return_type()->name()) {
-      throw std::string("function ") + node->name() + " has already been declared with different return type";
+      throw std::string("function ") + node->function() + " has already been declared with different return type";
     }
     if (symb->argument_types() != get_argument_types(node)) {
-      throw std::string("function ") + node->name() + " has already been declared with different argument types";
+      throw std::string("function ") + node->function() + " has already been declared with different argument types";
     }
 
     symb->definition(true);
@@ -394,17 +394,17 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
   }
 
   // DAVID: horrible hack
-  const std::string &id = "." + node->name();
+  const std::string &id = "." + node->function();
   std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
   if (symb != nullptr) {
     if (symb->scope() != node->scp()) {
-      throw node->name() + std::string(" declared twice with different scopes");
+      throw node->function() + std::string(" declared twice with different scopes");
     }
     if (symb->type() != node->return_type()) {
-      throw std::string("function ") + node->name() + " has already been declared with different return type";
+      throw std::string("function ") + node->function() + " has already been declared with different return type";
     }
     if (symb->argument_types() != get_argument_types(node)) {
-      throw std::string("function ") + node->name() + " has already been declared with different argument types";
+      throw std::string("function ") + node->function() + " has already been declared with different argument types";
     }
   } else {
     switch(node->scp()) {
