@@ -105,6 +105,14 @@ namespace pwn {
     return is_pointer(_t.name());
   }
 
+  bool is_string(type_t type) {
+      return is_same_raw_type(type, basic_type::TYPE_STRING);
+  }
+  bool is_string(const basic_type *type) {
+    basic_type _t { *type };
+    return is_string(_t.name());
+  }
+
   bool is_const_type(type_t type) {
     return type & pwn_type::TYPE_CONST;
   }

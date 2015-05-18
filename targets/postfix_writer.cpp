@@ -1,4 +1,5 @@
-// $Id: postfix_writer.cpp,v 1.5 2015/04/08 10:23:35 ist176133 Exp $ -*- c++ -*-
+// -*- vim: sw=2 sts=2 ts=2 expandtab ft=cpp
+// $Id: postfix_writer.cpp,v 1.6 2015/05/18 08:46:25 ist176133 Exp $ -*- c++ -*-
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -23,7 +24,7 @@ void pwn::postfix_writer::do_integer_node(cdk::integer_node * const node, int lv
 }
 
 void pwn::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
-  std::string lbl = mklbl();
+  auto lbl = mklbl();
 
   _pf.RODATA();
   _pf.ALIGN();
@@ -41,18 +42,18 @@ void pwn::postfix_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
 }
 
 void pwn::postfix_writer::do_string_node(cdk::string_node * const node, int lvl) {
-  int lbl1;
+  auto lbl = mklbl();
 
   /* generate the string */
   _pf.RODATA(); // strings are DATA readonly
   _pf.ALIGN(); // make sure we are aligned
-  _pf.LABEL(mklbl(lbl1 = ++_lbl)); // give the string a name
+  _pf.LABEL(lbl); // give the string a name
   _pf.STR(node->value()); // output string characters
 
   /* leave the address on the stack */
   _pf.TEXT(); // return to the TEXT segment
   _pf.ALIGN();
-  _pf.ADDR(mklbl(lbl1)); // the string to be printed
+  _pf.ADDR(lbl); // the string to be printed
 }
 
 void pwn::postfix_writer::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
@@ -117,6 +118,18 @@ void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
   _pf.NOT();
 }
 
+void pwn::postfix_writer::do_addressof_node(pwn::addressof_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  node->argument()->accept(this, lvl+2);
+}
+
+void pwn::postfix_writer::do_identity_node(pwn::identity_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  node->argument()->accept(this, lvl+2);
+}
+
 //--------------------- Binary functions ------------------------------------
 
 void pwn::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
@@ -149,7 +162,7 @@ void pwn::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
     return;
   }
 
-  if(is_double(node->type())) {
+  if (is_double(node->type())) {
     node->left()->accept(this, lvl+2);
     is_int(node->left()->type()) ? (_pf.I2D(), 0) : 0;
 
@@ -299,51 +312,99 @@ void pwn::postfix_writer::do_and_node(pwn::and_node * const node, int lvl) {
 
 void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
+  
+  // We only have pointers to double
+  auto type = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE));
 
-  /* implement me*/
+  node->pointer()->accept(this, lvl+2);
+  node->index()->accept(this, lvl+2);
+  _pf.INT(type->size());
+  _pf.MUL();
+  _pf.ADD();
+
+  // An index is a left-value, so we must leave the address on the stack
 }
 
 void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
-  // DAVID: horrible hack! topkek
-  // (this is caused by Simple not having explicit variable declarations)
-    const std::string id;
-  /*const std::string &id = node->lvalue()->value()*/;
-  std::shared_ptr<pwn::symbol> symbol = _symtab.find(id);
-  //if (symbol->value() == -1) {
-    if(0) {
-    _pf.DATA(); // variables are all global and live in DATA
-    _pf.ALIGN(); // make sure we are aligned
-    _pf.LABEL(id); // name variable location
-    _pf.CONST(0); // initialize it to 0 (zero)
-    _pf.TEXT(); // return to the TEXT segment
-    //symbol->value(0);
-  }
+  auto type = node->rvalue()->type();
 
-  node->rvalue()->accept(this, lvl); // determine the new value
-  _pf.DUP();
-  node->lvalue()->accept(this, lvl); // where to store the value
-  _pf.STORE(); // store the value at address
+  node->rvalue()->accept(this, lvl+2);
+
+  switch (type->size()) {
+  case 4:
+    _pf.DUP();
+    node->lvalue()->accept(this, lvl+2);
+    _pf.STORE();
+    break;
+  case 8:
+    _pf.DDUP();
+    node->lvalue()->accept(this, lvl+2);
+    _pf.DSTORE();
+    break;
+  default:
+    assert(false && "type has size not in {4, 8}");
+    break;
+  }
 }
 
 // ------------------------ N-ary functions ------------------------------------
 
 void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
-  /* implement me*/
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  auto &id = "." + node->function();
+
+  // Arguments are pushed onto the stack in reverse order (cdecl)
+  if (node->arguments() != nullptr) {
+    auto argtypes = 
+    auto args = node->arguments()->nodes();
+    for (auto it = args.rbegin(), et = args.rend(); it != et; ++it) {
+      // The parser always constructs an argument from an expression
+      auto arg = dynamic_cast<cdk::expression_node *>(*it);
+      assert(arg != nullptr);
+
+      arg->accept(this, lvl);
+      clean_size += arg->type()->size();
+    }
+  }
+
+  _pf.CALL(node->function());
+  _pf.TRASH(clean_size);
+
+  // FIXME
+  switch (node->return_type()->size()) {
+  case 4:
+    _pf.PUSH();
+    break;
+  case 8:
+    _pf.DPUSH();
+    break;
+  default:
+    assert(false && "return type size is not 4 or 8 bytes");
+  }
 }
 
 // ------------------------ Declarations ---------------------------------------
 
 void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
-
+  CHECK_TYPES(_compiler, _symtab, node);
   /* implement me*/
+}
+void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+  /* implement me*/
+}
+void pwn::postfix_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  _pf.TEXT();
+  _pf.ALIGN();
+  _pf.GLOBAL(node->function(), _pf.FUNC());
 }
 
 void pwn::postfix_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {
-  /* implement me*/
-}
-void pwn::postfix_writer::do_addressof_node(pwn::addressof_node * const node, int lvl) {
   /* implement me*/
 }
 void pwn::postfix_writer::do_return_node(pwn::return_node * const node, int lvl) {
@@ -419,57 +480,70 @@ void pwn::postfix_writer::do_print_node(pwn::print_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
   node->argument()->accept(this, lvl); // determine the value to print
 
-  // TODO
-
-  if (node->argument()->type()->name() == basic_type::TYPE_INT) {
+  if (is_int(node->argument()->type())) {
     _pf.CALL("printi");
     _pf.TRASH(4); // delete the printed value
-  }
-  else if (node->argument()->type()->name() == basic_type::TYPE_STRING) {
+  } else if (is_string(node->argument()->type())) {
     _pf.CALL("prints");
     _pf.TRASH(4); // delete the printed value's address
+  } else if (is_double(node->argument()->type())) {
+    _pf.CALL("printd");
+    _pf.TRASH(8); // dele the printed value
   }
   else {
-    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
-    exit(1);
+    assert(false && "Print not of type int, double or string");
   }
-  _pf.CALL("println"); // print a newline
+
+  if (node->new_line()) {
+    _pf.CALL("println"); // print a newline
+  }
 }
 
 //---------------------------------------------------------------------------
 
 void pwn::postfix_writer::do_read_node(pwn::read_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  _pf.CALL("readi");
-  _pf.PUSH();
-  //node->argument()->accept(this, lvl);
-  _pf.STORE();
+
+  if (is_int(node->type())) {
+    _pf.CALL("readi");
+    _pf.PUSH();
+    return;
+  }
+  if (is_double(node->type())) {
+    _pf.CALL("readd");
+    _pf.DPUSH();
+    return;
+  }
+
+  assert(false && "read is not of int or double");
 }
 
 //---------------------------------------------------------------------------
 
 void pwn::postfix_writer::do_if_node(cdk::if_node * const node, int lvl) {
-  int lbl1;
+  auto endif = mklbl();
+
   node->condition()->accept(this, lvl);
-  _pf.JZ(mklbl(lbl1 = ++_lbl));
-  node->block()->accept(this, lvl + 2);
-  _pf.LABEL(mklbl(lbl1));
+  _pf.JZ(endif);
+  node->block()->accept(this, lvl+2);
+  _pf.LABEL(endif);
 }
 
 //---------------------------------------------------------------------------
 
 void pwn::postfix_writer::do_if_else_node(cdk::if_else_node * const node, int lvl) {
-  int lbl1, lbl2;
+  auto elseblock = mklbl(), endif = mklbl();
+
   node->condition()->accept(this, lvl);
-  _pf.JZ(mklbl(lbl1 = ++_lbl));
-  node->thenblock()->accept(this, lvl + 2);
-  _pf.JMP(mklbl(lbl2 = ++_lbl));
-  _pf.LABEL(mklbl(lbl1));
-  node->elseblock()->accept(this, lvl + 2);
-  _pf.LABEL(mklbl(lbl1 = lbl2));
+  _pf.JZ(elseblock);
+  node->thenblock()->accept(this, lvl+2);
+  _pf.JMP(endif);
+  _pf.LABEL(elseblock);
+  node->elseblock()->accept(this, lvl+2);
+  _pf.LABEL(endif);
 }
 
 //---------------------------------------------------------------------------
 void pwn::postfix_writer::do_block_node(pwn::block_node * const node, int lvl) {
-  /* implement me*/
+  _symtab.push();
 }

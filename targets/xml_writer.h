@@ -1,4 +1,4 @@
-// $Id: xml_writer.h,v 1.6 2015/04/12 23:09:18 ist175537 Exp $ -*- c++ -*-
+// $Id: xml_writer.h,v 1.7 2015/05/18 08:46:25 ist176133 Exp $ -*- c++ -*-
 #ifndef __PWN_SEMANTICS_XMLWRITER_H__
 #define __PWN_SEMANTICS_XMLWRITER_H__
 

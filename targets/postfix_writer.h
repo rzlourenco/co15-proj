@@ -1,4 +1,4 @@
-// $Id: postfix_writer.h,v 1.5 2015/04/08 10:23:35 ist176133 Exp $ -*- c++ -*-
+// $Id: postfix_writer.h,v 1.6 2015/05/18 08:46:25 ist176133 Exp $ -*- c++ -*-
 #ifndef __PWN_SEMANTICS_PF_WRITER_H__
 #define __PWN_SEMANTICS_PF_WRITER_H__
 
@@ -112,6 +112,7 @@ namespace pwn {
 
   public:
     void do_neg_node(cdk::neg_node * const node, int lvl);
+    void do_identity_node(pwn::identity_node * const node, int lvl);
 
   public:
     void do_add_node(cdk::add_node * const node, int lvl);
@@ -131,6 +132,8 @@ namespace pwn {
     void do_alloc_node(pwn::alloc_node * const node, int lvl);
     void do_variable_node(pwn::variable_node * const node, int lvl);
     void do_function_call_node(pwn::function_call_node * const node, int lvl);
+    void do_function_def_node(pwn::function_def_node * const node, int lvl);
+    void do_function_decl_node(pwn::function_decl_node * const node, int lvl);
     void do_repeat_node(pwn::repeat_node * const node, int lvl);
     void do_addressof_node(pwn::addressof_node * const node, int lvl);
     void do_return_node(pwn::return_node * const node, int lvl);

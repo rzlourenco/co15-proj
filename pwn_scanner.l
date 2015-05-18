@@ -1,7 +1,7 @@
 %option c++ yyclass="pwn_scanner" outfile="pwn_scanner.cpp"
 %option stack noyywrap yylineno 8bit
 %{ 
-/* $Id: pwn_scanner.l,v 1.4 2015/04/08 10:23:35 ist176133 Exp $ */
+/* $Id: pwn_scanner.l,v 1.5 2015/05/18 08:46:24 ist176133 Exp $ */
 // make relevant includes before including the parser's tab file
 #include <string>
 #include <cdk/ast/sequence_node.h>

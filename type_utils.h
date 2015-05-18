@@ -29,6 +29,9 @@ namespace pwn {
   bool is_pointer(type_t type);
   bool is_pointer(const basic_type *type);
 
+  bool is_string(type_t type);
+  bool is_string(const basic_type *type);
+
   bool is_const_type(type_t type);
   bool is_const_type(const basic_type *type);
 }
