@@ -20,7 +20,11 @@ namespace pwn {
   class postfix_writer: public basic_ast_visitor {
     cdk::symbol_table<pwn::symbol> &_symtab;
     cdk::basic_postfix_emitter &_pf;
-    int _lbl;
+    std::vector<std::string> _endrepeat_labels;
+    std::vector<std::string> _increment_labels;
+    std::string _endfunction_label;
+    size_t _lbl;
+    ptrdiff_t _last_var_addr;
 
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<pwn::symbol> &symtab,
@@ -34,24 +38,8 @@ namespace pwn {
     }
 
   private:
-    /** Method used to generate sequential labels. */
-    inline std::string mklbl(int lbl) {
-      std::ostringstream oss;
-      if (lbl < 0)
-        oss << ".L" << -lbl;
-      else
-        oss << "_L" << lbl;
-      return oss.str();
-    }
-
     inline std::string mklbl() {
-      std::ostringstream oss;
-      _lbl++;
-      if (_lbl < 0)
-        oss << ".L" << -_lbl;
-      else
-        oss << "_L" << _lbl;
-      return oss.str();
+      return "#L" + std::to_string(_lbl++);
     }
 
     template <typename Func>

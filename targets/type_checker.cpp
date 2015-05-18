@@ -3,6 +3,7 @@
 #include <string>
 #include <cassert>
 #include "targets/type_checker.h"
+#include "targets/frame_size_calculator.h"
 #include "ast/all.h"  // automatically generated
 
 #define ASSERT_UNSPEC \
@@ -11,7 +12,7 @@
 
 using pwn::type_t;
 
-pwn::read_node *is_read_node(cdk::expression_node *node) {
+pwn::read_node *is_read_node(cdk::basic_node *node) {
   return dynamic_cast<pwn::read_node *>(node);
 }
 
@@ -302,24 +303,50 @@ void pwn::type_checker::do_function_call_node(pwn::function_call_node * const no
 
   if (node->arguments() != nullptr) {
     node->arguments()->accept(this, lvl + 2);
+
+    auto expected_arg_types = symb->argument_types();
+    auto given_arg_types = get_argument_types(node);
+    if(expected_arg_types.size() != given_arg_types.size()) {
+      throw std::string("Wrong number of arguments given. Expected: " + std::to_string(expected_arg_types.size())
+                                                       + "Given: "    + std::to_string(given_arg_types.size()));
+    }
+
+    for(size_t i = 0; i < expected_arg_types.size(); i++) {
+      auto given_arg_basic_node = node->arguments()->nodes()[i];
+      if (!is_read_node(given_arg_basic_node)) {
+        break;
+      }
+      auto given_arg_node = (cdk::expression_node *) given_arg_basic_node;
+      auto expected_arg_type = expected_arg_types[i];
+      if(is_read_node(given_arg_node)
+          && !is_same_raw_type(expected_arg_type, given_arg_node->type())) {
+            if(is_pointer(expected_arg_type) || is_string(expected_arg_type)) {
+              throw std::string("Trying to use a @ where a string/pointer is expected on a function call. Can't convert from @ to string/pointer");
+            }
+            given_arg_node->type(make_type(expected_arg_type));
+          }
+    }
+
     if (symb->argument_types() != get_argument_types(node)) {
       throw std::string("function call arguments mismatch");
     }
   } else if (symb->argument_types().size() > 0) {
     throw std::string("function call with too few parameters. Given 0");
-  }
 
-  node->type(symb->type()->name());
+  }
+  node->type(symb->type());
 }
 
 /*
  * Declarations
  */
-
 void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lvl) {
+  if (is_const_type(node->type()) && node->initializer() == nullptr) {
+    throw std::string("constant declaration must have initializer");
+  }
+
   const std::string &id = node->identifier();
   auto symb = _symtab.find_local(id);
-
   if (symb != nullptr) {
     throw std::string("duplicate variable declaration: " + id);
   }
@@ -356,6 +383,15 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
   _symtab.insert(id, symb);
 }
 
+void check_parameters_same_name_function(pwn::function_decl_node *const node) {
+    for (auto n : node->parameters()->nodes()) {
+      auto v = (pwn::variable_node *) n;
+      if (v->identifier() == node->function()) {
+        throw std::string("parameter has same name as the function.");
+      }
+    }
+}
+
 void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   if (node->default_return() != nullptr) {
     node->default_return()->accept(this, lvl+2);
@@ -369,6 +405,12 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
   // DAVID: horrible hack
   const std::string &id = "." + node->function();
   std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
+
+  if (symb == nullptr) {
+    do_function_decl_node(node, lvl);
+    symb = _symtab.find(id);
+  }
+
   if (symb != nullptr) {
     if (symb->definition()) {
       throw std::string("more than one definition for function ") + node->function();
@@ -385,25 +427,19 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
 
     symb->definition(true);
   } else {
-    switch (node->scp()) {
-    case scope::PUBLIC:
-      symb = make_public_function(node->return_type(), id, get_argument_types(node), id);
-      break;
-    case scope::LOCAL:
-      symb = make_local_function(node->return_type(), id, get_argument_types(node), id);
-      break;
-    default:
-      assert(false && "trying to define block/import functions which isn't possible");
-    }
-
-    _symtab.insert(id, symb);
+    assert(false && "couldn't find function in symbol table after declaring it");
   }
 }
+
+
 
 void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
   if (node->parameters() != nullptr) {
     node->parameters()->accept(this, lvl+2);
+
+    check_parameters_same_name_function(node);
   }
+
 
   // DAVID: horrible hack
   const std::string &id = "." + node->function();
@@ -468,13 +504,14 @@ void pwn::type_checker::do_assignment_node(pwn::assignment_node * const node, in
   ASSERT_UNSPEC;
 
   node->lvalue()->accept(this, lvl+2);
-  
+
   auto rnode = is_read_node(node->rvalue());
   if (rnode) {
     rnode->type(node->lvalue()->type());
-  } else {
-    node->rvalue()->accept(this, lvl+2);
+    return;
   }
+
+  node->rvalue()->accept(this, lvl+2);
 
   if (pwn::is_const_type(node->lvalue()->type())) {
     throw std::string("Cannot assign to const");

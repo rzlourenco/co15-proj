@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <memory>
+#include "targets/frame_size_calculator.h"
 #include "targets/postfix_writer.h"
 #include "ast/all.h"  // all.h is automatically generated
 
@@ -114,8 +115,15 @@ void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
 void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
+  auto label = mklbl();
+  auto after = mklbl();
   node->argument()->accept(this, lvl+2);
-  _pf.NOT();
+  _pf.JZ(label);
+  _pf.INT(0);
+  _pf.JMP(after);
+  _pf.LABEL(label);
+  _pf.INT(1);
+  _pf.LABEL(after);
 }
 
 void pwn::postfix_writer::do_addressof_node(pwn::addressof_node * const node, int lvl) {
@@ -297,22 +305,30 @@ void pwn::postfix_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
 void pwn::postfix_writer::do_or_node(pwn::or_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
+  auto lbl = mklbl();
+
   node->left()->accept(this, lvl+2);
+  _pf.JNZ(lbl);
+  _pf.TRASH(node->type()->size());
   node->right()->accept(this, lvl+2);
-  _pf.OR();
+  _pf.LABEL(lbl);
 }
 
 void pwn::postfix_writer::do_and_node(pwn::and_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
+  auto lbl = mklbl();
+
   node->left()->accept(this, lvl+2);
+  _pf.JZ(lbl);
+  _pf.TRASH(node->type()->size());
   node->right()->accept(this, lvl+2);
-  _pf.AND();
+  _pf.LABEL(lbl);
 }
 
 void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  
+
   // We only have pointers to double
   auto type = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE));
 
@@ -354,27 +370,36 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
 void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
-  auto &id = "." + node->function();
+  auto symb = _symtab.find("." + node->function());
+  assert(symb != nullptr);
+
+  size_t clean_size = 0;
 
   // Arguments are pushed onto the stack in reverse order (cdecl)
-  if (node->arguments() != nullptr) {
-    auto argtypes = 
-    auto args = node->arguments()->nodes();
-    for (auto it = args.rbegin(), et = args.rend(); it != et; ++it) {
-      // The parser always constructs an argument from an expression
-      auto arg = dynamic_cast<cdk::expression_node *>(*it);
-      assert(arg != nullptr);
+  const auto &argtypes = symb->argument_types();
+  const auto &args = node->arguments() ? node->arguments()->nodes() : std::vector<cdk::basic_node *>();
 
-      arg->accept(this, lvl);
-      clean_size += arg->type()->size();
+  if (argtypes.size() != args.size()) {
+    throw "argument list differs in size from previously declared function " + node->function();
+  }
+
+  for (size_t ix = 0; ix < argtypes.size(); ++ix) {
+    auto arg = dynamic_cast<cdk::expression_node *>(args[ix]);
+    assert(arg != nullptr && "syntax is allowing non-expression nodes in function call");
+
+    if (!is_same_raw_type(argtypes[ix], arg->type())) {
+      throw "argument " + std::to_string(ix + 1) + " differs in function call to " + node->function();
     }
+
+    clean_size += arg->type()->size();
+    arg->accept(this, lvl);
   }
 
   _pf.CALL(node->function());
   _pf.TRASH(clean_size);
 
   // FIXME
-  switch (node->return_type()->size()) {
+  switch (symb->type()->size()) {
   case 4:
     _pf.PUSH();
     break;
@@ -390,31 +415,176 @@ void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const 
 
 void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  /* implement me*/
+
+  auto symb = _symtab.find(node->identifier());
+  if (node->scp() == scope::IMPORT) {
+    _pf.GLOBAL(symb->label(), _pf.OBJ());
+    return;
+  }
+
+  if (node->scp() == scope::BLOCK && node->initializer() != nullptr) {
+    _pf.TEXT();
+    _pf.ALIGN();
+    node->initializer()->accept(this, lvl);
+
+    switch (node->type()->size()) {
+    case 4:
+       _pf.LOCA(symb->offset());
+      break;
+    case 8:
+      _pf.LOCAL(symb->offset());
+      _pf.DSTORE();
+      break; // pato real
+    default:
+      assert(false && "type size not 4 or 8");
+    }
+
+    return;
+  }
+
+  if (node->scp() == scope::PUBLIC) {
+    _pf.GLOBAL(symb->label(), _pf.OBJ());
+  }
+
+  if (node->initializer() == nullptr) {
+    _pf.BSS();
+    _pf.ALIGN();
+    _pf.LABEL(symb->label());
+    _pf.BYTE(symb->type()->size());
+    return;
+  }
+
+  if (is_const_type(node->type())) {
+    _pf.RODATA();
+  } else {
+    _pf.DATA();
+  }
+  _pf.ALIGN();
+  _pf.LABEL(symb->label());
+
+  if (dynamic_cast<cdk::integer_node *>(node->initializer())) {
+    _pf.CONST(dynamic_cast<cdk::integer_node *>(node->initializer())->value());
+  } else if (dynamic_cast<noob_node *>(node->initializer())) {
+    _pf.CONST(0);
+  }else if (dynamic_cast<cdk::double_node *>(node->initializer())) {
+    _pf.DOUBLE(dynamic_cast<cdk::double_node *>(node->initializer())->value());
+  } else if (dynamic_cast<cdk::string_node *>(node->initializer())) {
+    auto lbl = mklbl();
+
+    _pf.RODATA();
+    _pf.ALIGN();
+    _pf.LABEL(lbl);
+    _pf.STR(dynamic_cast<cdk::string_node *>(node->initializer())->value());
+
+    if (is_const_type(node->type())) {
+      _pf.RODATA();
+    } else {
+      _pf.DATA();
+    }
+    _pf.ALIGN();
+    _pf.ID(lbl);
+  }
 }
 void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
-  /* implement me*/
+
+  // FIXME: account for return variable if not void
+  size_t reserved_bytes = 0;
+  {
+    auto calc = std::unique_ptr<frame_size_calculator>(new frame_size_calculator(_compiler));
+    calc->do_function_def_node(node, 0);
+    reserved_bytes = calc->get_max_need();
+  }
+
+  auto symb = _symtab.find("." + node->function());
+  assert(symb != nullptr);
+
+  _pf.TEXT();
+  _pf.ALIGN();
+  if (node->scp() == scope::PUBLIC) {
+    _pf.GLOBAL(symb->label(), _pf.FUNC());
+  }
+  _pf.LABEL(symb->label());
+  _pf.ENTER(reserved_bytes);
+
+  _symtab.push();
+  if (node->parameters()) {
+    size_t base_offset = 8;
+    for (auto *p : node->parameters()->nodes()) {
+      variable_node *param = dynamic_cast<variable_node *>(p);
+      _symtab.insert(param->identifier(), make_block_variable(param->type(), param->identifier(), base_offset));
+      base_offset += param->type()->size();
+    }
+  }
+
+  if (!is_same_raw_type(node->return_type(), basic_type::TYPE_VOID)) {
+    if (_symtab.find_local(node->function())) {
+      throw std::string("argument with same name as function");
+    }
+
+    _last_var_addr = -node->return_type()->size();
+    _symtab.insert(node->function(), make_block_variable(node->return_type(), node->function(), _last_var_addr));
+  }
 }
+
 void pwn::postfix_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
+  // FIXME
   _pf.TEXT();
   _pf.ALIGN();
   _pf.GLOBAL(node->function(), _pf.FUNC());
 }
 
 void pwn::postfix_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {
-  /* implement me*/
+  auto condition = mklbl(), increment = mklbl(), endrepeat = mklbl();
+
+  _increment_labels.push_back(increment);
+  _endrepeat_labels.push_back(endrepeat);
+
+  if (node->initializer()) {
+    node->initializer()->accept(this, lvl);
+  }
+
+  _pf.LABEL(condition);
+  if (node->condition()) {
+    node->condition()->accept(this, lvl);
+  } else {
+    _pf.INT(1);
+  }
+  _pf.JZ(endrepeat);
+
+  node->body()->accept(this, lvl+2);
+
+  _pf.LABEL(increment);
+  if (node->increment()) {
+    node->increment()->accept(this, lvl);
+  }
+
+  _pf.JMP(condition);
+  _pf.LABEL(endrepeat);
+
+  _increment_labels.pop_back();
+  _endrepeat_labels.pop_back();
 }
 void pwn::postfix_writer::do_return_node(pwn::return_node * const node, int lvl) {
-  /* implement me*/
+  _pf.JMP(_endfunction_label);
 }
 void pwn::postfix_writer::do_next_node(pwn::next_node * const node, int lvl) {
-  /* implement me*/
+  auto jmp = node->next() - 1;
+  if (jmp > _increment_labels.size()) {
+    throw std::string("too many next levels") + std::to_string(jmp+1);
+  }
+
+  _pf.JMP(_increment_labels.rbegin()[jmp]);
 }
 void pwn::postfix_writer::do_stop_node(pwn::stop_node * const node, int lvl) {
-  /* implement me*/
+  auto jmp = node->stop() - 1;
+  if (jmp > _endrepeat_labels.size()) {
+    throw std::string("too many stop levels") + std::to_string(jmp+1);
+  }
+
+  _pf.JMP(_endrepeat_labels.rbegin()[jmp]);
 }
 
 //---------------------------------------------------------------------------
