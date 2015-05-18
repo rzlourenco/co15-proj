@@ -34,7 +34,7 @@ std::shared_ptr<symbol> make_local_function(basic_type *type, const std::string 
         name,
         argtypes,
         true,
-        true,
+        false,
         label,
         0
     ));
@@ -59,7 +59,7 @@ std::shared_ptr<symbol> make_public_function(basic_type *type, const std::string
         name,
         argtypes,
         true,
-        true,
+        false,
         label,
         0
     ));

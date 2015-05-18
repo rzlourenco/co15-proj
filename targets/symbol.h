@@ -62,28 +62,25 @@ namespace pwn {
         basic_type *type,
         const std::string &name,
         const std::string &label);
-
-    friend std::shared_ptr<symbol> make_public_variable(
-        basic_type *type,
-        const std::string &name,
-        const std::string &label);
-
-    friend std::shared_ptr<symbol> make_import_variable(
-        basic_type *type,
-        const std::string &name);
-
     friend std::shared_ptr<symbol> make_local_function(
         basic_type *type,
         const std::string &name,
         const arglist_t &argtypes,
         const std::string &label);
 
+    friend std::shared_ptr<symbol> make_public_variable(
+        basic_type *type,
+        const std::string &name,
+        const std::string &label);
     friend std::shared_ptr<symbol> make_public_function(
         basic_type *type,
         const std::string &name,
         const arglist_t &argtypes,
         const std::string &label);
 
+    friend std::shared_ptr<symbol> make_import_variable(
+        basic_type *type,
+        const std::string &name);
     friend std::shared_ptr<symbol> make_import_function(
         basic_type *type,
         const std::string &name,
@@ -102,22 +99,25 @@ namespace pwn {
       basic_type *type,
       const std::string &name,
       const std::string &label);
+  std::shared_ptr<symbol> make_local_function(
+        basic_type *type,
+        const std::string &name,
+        const arglist_t &argtypes,
+        const std::string &label);
 
   std::shared_ptr<symbol> make_public_variable(
       basic_type *type,
       const std::string &name,
       const std::string &label);
-
-  std::shared_ptr<symbol> make_import_variable(
-      basic_type *type,
-      const std::string &name);
-
   std::shared_ptr<symbol> make_public_function(
       basic_type *type,
       const std::string &name,
       const arglist_t &argtypes,
       const std::string &label);
 
+  std::shared_ptr<symbol> make_import_variable(
+      basic_type *type,
+      const std::string &name);
   std::shared_ptr<symbol> make_import_function(
       basic_type *type,
       const std::string &name,

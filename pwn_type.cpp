@@ -26,6 +26,9 @@ std::ostream& operator<<(std::ostream& os, const basic_type& typ) {
     case(basic_type::TYPE_POINTER):
       os << "pointer";
       break;
+    case(basic_type::TYPE_VOID):
+      os << "void";
+      break;
     case(basic_type::TYPE_UNSPEC):
       os << "unset";
       break;

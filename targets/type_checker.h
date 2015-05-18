@@ -28,8 +28,7 @@ namespace pwn {
     }
 
   public:
-    void do_sequence_node(cdk::sequence_node * const node, int lvl) {
-    }
+    void do_sequence_node(cdk::sequence_node * const node, int lvl);
 
   private:
     void assert_bin_args(cdk::binary_expression_node *const node, const std::vector<type_t> &types);

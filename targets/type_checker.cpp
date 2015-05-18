@@ -1,6 +1,7 @@
 // $Id: type_checker.cpp,v 1.5 2015/04/08 10:23:35 ist176133 Exp $ -*- c++ -*-
 #include <algorithm>
 #include <string>
+#include <cassert>
 #include "targets/type_checker.h"
 #include "ast/all.h"  // automatically generated
 
@@ -323,8 +324,19 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
   }
 
   switch (node->scp()) {
-  default:
-    break /* my ass */;
+  case scope::PUBLIC:
+    symb = make_public_variable(node->type(), id, id);
+    break;
+  case scope::LOCAL:
+    symb = make_local_variable(node->type(), id, id);
+    break;
+  case scope::IMPORT:
+    symb = make_import_variable(node->type(), id);
+    break;
+  case scope::BLOCK:
+    //FIXME: fix offset
+    symb = make_block_variable(node->type(), id, 0);
+    break;
   }
 
   _symtab.insert(id, symb);
@@ -368,7 +380,7 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
       symb = make_local_function(node->return_type(), id, get_argument_types(node), id);
       break;
     default:
-      assert(false);
+      assert(false && "trying to define block/import functions which isn't possible");
     }
 
     _symtab.insert(id, symb);
@@ -385,17 +397,29 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
   const std::string &id = "." + node->name();
   std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
   if (symb != nullptr) {
-    if (symb->scp() != node->scp()) {
-      throw node->name() + std::string(" declared twice with different scopes");
+    if (symb->scope() != node->scp()) {
+      assert(false && new std::string(node->name() + "declared twich with different scopes"));
     }
     if (symb->type() != node->return_type()) {
-      throw std::string("function ") + node->name() + " has already been declared with different return type";
+      assert(false && new std::string("function" + node->name() + "has already been declared with different return type"));
     }
     if (symb->argument_types() != get_argument_types(node)) {
-      throw std::string("function ") + node->name() + " has already been declared with different argument types";
+      assert(false && new std::string("function" + node->name() + "has already been declared with different argument types"));
     }
   } else {
-    symb = std::make_shared<pwn::symbol>(node->scp(), node->return_type(), id, get_argument_types(node), false);
+    switch(node->scp()) {
+    case scope::PUBLIC:
+      symb = make_public_function(node->return_type(), id, get_argument_types(node), id);
+      break;
+    case scope::LOCAL:
+      symb = make_local_function(node->return_type(), id, get_argument_types(node), id);
+      break;
+    case scope::IMPORT:
+      symb = make_import_function(node->return_type(), id, get_argument_types(node));
+      break;
+    default:
+      assert( false && "can't declare block function");
+    }
     _symtab.insert(id, symb);
   }
 }
@@ -483,4 +507,10 @@ void pwn::type_checker::do_if_else_node(cdk::if_else_node * const node, int lvl)
 void pwn::type_checker::do_block_node(pwn::block_node * const node, int lvl) { }
 
 //---------------------------------------------------------------------------
+
+void pwn::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl) {
+  for(auto n : node->nodes()) {
+    n->accept(this, lvl+2);
+  }
+}
 

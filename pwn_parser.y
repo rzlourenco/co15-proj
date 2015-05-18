@@ -115,7 +115,7 @@ params : param			{ $$ = new cdk::sequence_node(LINE, $1); }
        | params ',' param	{ $$ = new cdk::sequence_node(LINE, $3, $1); }
        ;
 
-param  : type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::LOCAL, $1, $2, nullptr);}
+param  : type tIDENTIFIER		{ $$ = new pwn::variable_node(LINE, pwn::scope::BLOCK, $1, $2, nullptr);}
        ;
 
 
