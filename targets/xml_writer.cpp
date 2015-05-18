@@ -8,8 +8,6 @@
 //---------------------------------------------------------------------------
 
 void pwn::xml_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {
-  CHECK_TYPES(_compiler, _symtab, node);
-
   open_element(node, lvl, std::make_pair("size", node->size()));
 
   for (size_t i = 0; i < node->size(); i++) {
