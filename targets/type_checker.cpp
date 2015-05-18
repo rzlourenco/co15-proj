@@ -46,6 +46,7 @@ void pwn::type_checker::do_read_node(pwn::read_node * const node, int lvl) {
 }
 
 void pwn::type_checker::do_identifier_node(pwn::identifierrr_node * const node, int lvl) {
+  ASSERT_UNSPEC;
   auto &id = node->identifier();
   auto symbol = _symtab.find(id);
 
@@ -294,6 +295,8 @@ void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
  */
 
 void pwn::type_checker::do_function_call_node(pwn::function_call_node * const node, int lvl) {
+  ASSERT_UNSPEC;
+
   auto id = "." + node->function();
 
   auto symb = _symtab.find(id);
@@ -383,14 +386,7 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
   _symtab.insert(id, symb);
 }
 
-void check_parameters_same_name_function(pwn::function_decl_node *const node) {
-    for (auto n : node->parameters()->nodes()) {
-      auto v = (pwn::variable_node *) n;
-      if (v->identifier() == node->function()) {
-        throw std::string("parameter has same name as the function.");
-      }
-    }
-}
+
 
 void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   if (node->default_return() != nullptr) {
@@ -429,14 +425,23 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
   } else {
     assert(false && "couldn't find function in symbol table after declaring it");
   }
+
+  //FIXME: not sure if this should be here(just here so the xml_writer does everything all right)
+  symb = make_block_variable(node->return_type(), node->function(), -8);
+  _symtab.insert(node->function(), symb);
 }
 
-
+void check_parameters_same_name_function(pwn::function_decl_node *const node) {
+    for (auto n : node->parameters()->nodes()) {
+      auto v = (pwn::variable_node *) n;
+      if (v->identifier() == node->function()) {
+        throw std::string("parameter has same name as the function.");
+      }
+    }
+}
 
 void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
   if (node->parameters() != nullptr) {
-    node->parameters()->accept(this, lvl+2);
-
     check_parameters_same_name_function(node);
   }
 
@@ -493,6 +498,8 @@ void pwn::type_checker::do_stop_node(pwn::stop_node * const node, int lvl) { }
 //---------------------------------------------------------------------------
 
 void pwn::type_checker::do_rvalue_node(pwn::rvalue_node * const node, int lvl) {
+  ASSERT_UNSPEC;
+
   node->lvalue()->accept(this, lvl);
 
   node->type(new basic_type(*node->lvalue()->type()));

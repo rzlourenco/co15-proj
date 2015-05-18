@@ -190,27 +190,31 @@ void pwn::xml_writer::do_noob_node(pwn::noob_node * const node, int lvl) {
 void pwn::xml_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
+  _symtab.push();
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("scope", node->scp()),
         std::make_pair("return_type", *(node->return_type())),
-        std::make_pair("name", node->name())),
+        std::make_pair("name", node->function())),
       std::make_tuple(
         std::make_pair("parameters", node->parameters())));
+  _symtab.pop();
 }
 
 void pwn::xml_writer::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
+  _symtab.push();
   write_element(node, lvl,
       std::make_tuple(
         std::make_pair("scope", node->scp()),
         std::make_pair("return_type", *(node->return_type())),
-        std::make_pair("name", node->name())),
+        std::make_pair("name", node->function())),
       std::make_tuple(
         std::make_pair("parameters", node->parameters()),
         std::make_pair("default_return", node->default_return()),
         std::make_pair("body", node->body())));
+  _symtab.pop();
 }
 
 void pwn::xml_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
@@ -303,6 +307,7 @@ void pwn::xml_writer::do_if_else_node(cdk::if_else_node * const node, int lvl) {
 }
 
 void pwn::xml_writer::do_block_node(pwn::block_node * const node, int lvl) {
+  _symtab.push();
   CHECK_TYPES(_compiler, _symtab, node);
 
   write_element(node, lvl,
@@ -310,5 +315,6 @@ void pwn::xml_writer::do_block_node(pwn::block_node * const node, int lvl) {
       std::make_tuple(
         std::make_pair("decls", node->decls()),
         std::make_pair("stmts", node->stmts())));
+  _symtab.pop();
 }
 
