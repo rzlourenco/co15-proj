@@ -75,38 +75,37 @@ public:
   /* pwn nodes */
 
 public:
-  virtual void do_noob_node(pwn::noob_node * const node, int lvl) { }
-  virtual void do_identifier_node(pwn::identifierrr_node * const node, int lvl) { }
-  virtual void do_read_node(pwn::read_node * const node, int lvl) { }
+  virtual void do_noob_node(pwn::noob_node * const node, int lvl) = 0;
+  virtual void do_identifier_node(pwn::identifierrr_node * const node, int lvl) = 0;
+  virtual void do_read_node(pwn::read_node * const node, int lvl) = 0;
 
-  virtual void do_identity_node(pwn::identity_node * const node, int lvl) { }
-  virtual void do_not_node(pwn::not_node * const node, int lvl) { }
-  virtual void do_alloc_node(pwn::alloc_node * const node, int lvl) { }
-  virtual void do_addressof_node(pwn::addressof_node * const node, int lvl) { }
+  virtual void do_identity_node(pwn::identity_node * const node, int lvl) = 0;
+  virtual void do_not_node(pwn::not_node * const node, int lvl) = 0;
+  virtual void do_alloc_node(pwn::alloc_node * const node, int lvl) = 0;
+  virtual void do_addressof_node(pwn::addressof_node * const node, int lvl) = 0;
 
-  virtual void do_assignment_node(pwn::assignment_node * const node, int lvl) { }
-  virtual void do_or_node(pwn::or_node * const node, int lvl) { }
-  virtual void do_and_node(pwn::and_node * const node, int lvl) { }
-  virtual void do_comma_node(pwn::comma_node * const node, int lvl) { }
-  virtual void do_index_node(pwn::index_node * const node, int lvl) { }
+  virtual void do_assignment_node(pwn::assignment_node * const node, int lvl) = 0;
+  virtual void do_or_node(pwn::or_node * const node, int lvl) = 0;
+  virtual void do_and_node(pwn::and_node * const node, int lvl) = 0;
+  virtual void do_comma_node(pwn::comma_node * const node, int lvl) = 0;
+  virtual void do_index_node(pwn::index_node * const node, int lvl) = 0;
 
-  virtual void do_function_call_node(pwn::function_call_node * const node, int lvl) { }
+  virtual void do_function_call_node(pwn::function_call_node * const node, int lvl) = 0;
 
 public:
-  virtual void do_lvalue_node(pwn::lvalue_node * const node, int lvl) { }
-  virtual void do_rvalue_node(pwn::rvalue_node * const node, int lvl) { }
+  virtual void do_rvalue_node(pwn::rvalue_node * const node, int lvl) = 0;
 
-  virtual void do_variable_node(pwn::variable_node * const node, int lvl) { }
-  virtual void do_function_decl_node(pwn::function_decl_node * const node, int lvl) { }
-  virtual void do_function_def_node(pwn::function_def_node * const node, int lvl) { }
-  virtual void do_block_node(pwn::block_node * const node, int lvl) { }
+  virtual void do_variable_node(pwn::variable_node * const node, int lvl) = 0;
+  virtual void do_function_decl_node(pwn::function_decl_node * const node, int lvl) = 0;
+  virtual void do_function_def_node(pwn::function_def_node * const node, int lvl) = 0;
+  virtual void do_block_node(pwn::block_node * const node, int lvl) = 0;
 
-  virtual void do_repeat_node(pwn::repeat_node * const node, int lvl) { }
-  virtual void do_return_node(pwn::return_node * const node, int lvl) { }
-  virtual void do_next_node(pwn::next_node * const node, int lvl) { }
-  virtual void do_stop_node(pwn::stop_node * const node, int lvl) { }
-  virtual void do_evaluation_node(pwn::evaluation_node * const node, int lvl) { }
-  virtual void do_print_node(pwn::print_node * const node, int lvl) { }
+  virtual void do_repeat_node(pwn::repeat_node * const node, int lvl) = 0;
+  virtual void do_return_node(pwn::return_node * const node, int lvl) = 0;
+  virtual void do_next_node(pwn::next_node * const node, int lvl) = 0;
+  virtual void do_stop_node(pwn::stop_node * const node, int lvl) = 0;
+  virtual void do_evaluation_node(pwn::evaluation_node * const node, int lvl) = 0;
+  virtual void do_print_node(pwn::print_node * const node, int lvl) = 0;
 };
 
 #endif

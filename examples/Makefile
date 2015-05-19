@@ -1,16 +1,32 @@
-CC=../pwn
-XMLDIR=xml/
-DEPS=$(wildcard *.pwn)
+MAKEOPTS += -k
 
-all: $(patsubst %.pwn,%.xml,$(DEPS))
+PWN    := ../pwn
+YASM   := yasm
+TMPDIR := .obj
+OUTDIR := bin
 
-%.xml : %.pwn
-	$(CC) $< -o $(XMLDIR)$(patsubst pwn,xml,$@)
+SRCS   := $(wildcard *.pwn)
+EXES   := $(SRCS:%.pwn=$(OUTDIR)/%)
 
+all: | $(TMPDIR)/.dummy $(OUTDIR)/.dummy $(EXES)
 
-print-%:
-	@echo '$*=$($*)'
+$(TMPDIR)/%.asm: %.pwn
+	$(PWN) $< -o $(ASMDIR)$(patsubst pwn,asm,$@)
+
+$(TMPDIR)/%.o: $(TMPDIR)/%.asm
+	$(YASM) -felf32 -gdwarf2 $< -o $@
+
+$(OUTDIR)/%: $(TMPDIR)/%.o
+	$(LD) -melf_i386 -L$(HOME)/compiladores/root/usr/lib $< -lrts -o $@
+	
+$(TMPDIR)/.dummy:
+	@mkdir -p $(TMPDIR)
+	@touch $@
+
+$(OUTDIR)/.dummy:
+	@mkdir -p $(OUTDIR)
+	@touch $@
 
 clean:
-	rm -f $(XMLDIR)/*
+	rm -rf $(TMPDIR) $(OUTDIR)
 

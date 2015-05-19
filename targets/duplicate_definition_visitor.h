@@ -86,7 +86,6 @@ namespace pwn {
     void do_comma_node(pwn::comma_node * const node, int lvl) override { }
     void do_index_node(pwn::index_node * const node, int lvl) override { }
     void do_function_call_node(pwn::function_call_node * const node, int lvl) override { }
-    void do_lvalue_node(pwn::lvalue_node * const node, int lvl) override { }
     void do_rvalue_node(pwn::rvalue_node * const node, int lvl) override { }
     void do_repeat_node(pwn::repeat_node * const node, int lvl) override { }
     void do_return_node(pwn::return_node * const node, int lvl) override { }
@@ -96,4 +95,3 @@ namespace pwn {
     void do_print_node(pwn::print_node * const node, int lvl) override { }
   };
 }
-

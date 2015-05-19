@@ -57,8 +57,9 @@ namespace pwn {
     void do_gt_node(cdk::gt_node * const node, int lvl);
     void do_ne_node(cdk::ne_node * const node, int lvl);
     void do_eq_node(cdk::eq_node * const node, int lvl);
+    void do_and_node(pwn::and_node * const node, int lvl);    
     void do_or_node(pwn::or_node * const node, int lvl);
-    void do_and_node(pwn::and_node * const node, int lvl);
+    void do_comma_node(pwn::comma_node * const node, int lvl);
     void do_not_node(pwn::not_node * const node, int lvl);
     void do_alloc_node(pwn::alloc_node * const node, int lvl);
     void do_variable_node(pwn::variable_node * const node, int lvl);
@@ -76,7 +77,7 @@ namespace pwn {
   public:
     void do_if_node(cdk::if_node * const node, int lvl);
     void do_if_else_node(cdk::if_else_node * const node, int lvl);
-    void do_block_node(pwn::block_node * const node, int lvl); 
+    void do_block_node(pwn::block_node * const node, int lvl);
 
   public:
     void do_rvalue_node(pwn::rvalue_node * const node, int lvl);

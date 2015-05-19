@@ -1,5 +1,5 @@
 // -*- vim: sw=2 sts=2 ts=2 expandtab ft=cpp
-// $Id: postfix_writer.cpp,v 1.6 2015/05/18 08:46:25 ist176133 Exp $ -*- c++ -*-
+// $Id: postfix_writer.cpp,v 1.8 2015/05/19 19:07:56 ist176133 Exp $ -*- c++ -*-
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -10,9 +10,9 @@
 
 
 void pwn::postfix_writer::declare_rts_function(const std::string &s) {
-  if(_declared_functions.count(s) == 0) { 
+  if(_declared_functions.count(s) == 0) {
     _pf.TEXT();
-    _pf.ALIGN(); 
+    _pf.ALIGN();
     _pf.EXTERN(s);
     _declared_functions.insert(s);
   }
@@ -375,6 +375,14 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
   }
 }
 
+void pwn::postfix_writer::do_comma_node(pwn::comma_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
+  node->left()->accept(this, lvl);
+  _pf.TRASH(node->left()->type()->size());
+  node->right()->accept(this, lvl);
+}
+
 // ------------------------ N-ary functions ------------------------------------
 
 void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const node, int lvl) {
@@ -572,7 +580,7 @@ void pwn::postfix_writer::do_function_decl_symtab(pwn::function_decl_node *const
   auto symb = _symtab.find(id);
   if( symb != nullptr) {
     return;
-  } 
+  }
   switch(node->scp()) {
     case pwn::scope::PUBLIC:
       // Label must be compatible with C
@@ -598,10 +606,10 @@ void pwn::postfix_writer::do_function_decl(pwn::function_decl_node *const node) 
   }
 
   _pf.TEXT();
-  _pf.ALIGN(); 
+  _pf.ALIGN();
   switch(node->scp()) {
     case scope::PUBLIC:
-      _pf.GLOBAL(calculate_function_label(node->function()), _pf.FUNC()); 
+      _pf.GLOBAL(calculate_function_label(node->function()), _pf.FUNC());
       break;
     case scope::IMPORT:
       _pf.EXTERN(calculate_function_label(node->function()));
@@ -690,7 +698,7 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
 }
 
 void pwn::postfix_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
-  
+
   do_function_decl_symtab(node);
 
   CHECK_TYPES(_compiler, _symtab, node);

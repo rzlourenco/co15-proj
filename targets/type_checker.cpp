@@ -1,4 +1,4 @@
-// $Id: type_checker.cpp,v 1.7 2015/05/19 09:20:48 ist176133 Exp $ -*- c++ -*-
+// $Id: type_checker.cpp,v 1.8 2015/05/19 19:07:56 ist176133 Exp $ -*- c++ -*-
 #include <algorithm>
 #include <string>
 #include <cassert>
@@ -290,6 +290,15 @@ void pwn::type_checker::do_index_node(pwn::index_node * const node, int lvl) {
   node->type(pwn::make_type(basic_type::TYPE_DOUBLE));
 }
 
+void pwn::type_checker::do_comma_node(pwn::comma_node * const node, int lvl) {
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl+2);
+  node->right()->accept(this, lvl+2);
+
+  node->type(node->right()->type());
+}
+
 /*
  * N-ary expressions
  */
@@ -525,4 +534,3 @@ void pwn::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl
     n->accept(this, lvl+2);
   }
 }
-

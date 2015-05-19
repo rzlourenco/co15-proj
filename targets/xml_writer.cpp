@@ -226,7 +226,7 @@ void pwn::xml_writer::do_variable_node(pwn::variable_node * const node, int lvl)
         std::make_pair("type", *(node->type())),
         std::make_pair("identifier", node->identifier())),
       std::make_tuple(
-        std::make_pair("initializer", node->initializer())));	
+        std::make_pair("initializer", node->initializer())));
 }
 
 //---------------------------------------------------------------------------
@@ -317,4 +317,3 @@ void pwn::xml_writer::do_block_node(pwn::block_node * const node, int lvl) {
         std::make_pair("stmts", node->stmts())));
   _symtab.pop();
 }
-
