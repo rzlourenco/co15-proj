@@ -426,6 +426,88 @@ void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const 
 
 // ------------------------ Declarations ---------------------------------------
 
+void pwn::postfix_writer::do_variable_import(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
+    _pf.GLOBAL(sym->label(), _pf.OBJ());
+}
+
+void pwn::postfix_writer::do_variable_block(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
+    if(node->initializer() == nullptr) {
+      return;
+    }
+    _pf.TEXT();
+    _pf.ALIGN();
+    node->initializer()->accept(this, -1); /*meaningless -1: forgot to add lvl to the function parameters, won't change now*/
+
+    switch (node->type()->size()) {
+    case 4:
+       _pf.LOCA(sym->offset());
+      break;
+    case 8:
+      _pf.LOCAL(sym->offset());
+      _pf.DSTORE();
+      break;
+    default:
+      assert(false && "type size not 4 or 8");
+    }
+}
+
+void pwn::postfix_writer::do_variable_public(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
+    _pf.GLOBAL(sym->label(), _pf.OBJ());
+    do_variable_local(node, sym);
+}
+
+void pwn::postfix_writer::do_variable_local(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
+  if (node->initializer() == nullptr) {
+    do_variable_local_without_init(node, sym);
+  } else if ( dynamic_cast<cdk::string_node *>(node->initializer())) {
+    do_variable_local_with_init_string(node, sym);
+  } else {
+    do_variable_local_with_init_non_string(node, sym);
+  }
+}
+
+
+void pwn::postfix_writer::do_variable_local_without_init(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
+    _pf.BSS();
+    _pf.ALIGN();
+    _pf.LABEL(sym->label());
+    _pf.BYTE(sym->type()->size());
+    return;
+}
+
+void pwn::postfix_writer::do_variable_local_with_init_non_string(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
+  is_const_type(node->type()) ? _pf.RODATA() : _pf.DATA();
+  _pf.ALIGN();
+  _pf.LABEL(sym->label());
+  if (dynamic_cast<cdk::integer_node *>(node->initializer())) {
+    _pf.CONST(dynamic_cast<cdk::integer_node *>(node->initializer())->value());
+  } else if (dynamic_cast<noob_node *>(node->initializer())) {
+    _pf.CONST(0);
+  }else if (dynamic_cast<cdk::double_node *>(node->initializer())) {
+    _pf.DOUBLE(dynamic_cast<cdk::double_node *>(node->initializer())->value());
+  } else {
+    assert(false && "unknown initializer type");
+  }
+  
+}
+
+void pwn::postfix_writer::do_variable_local_with_init_string(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
+  auto str_data_lbl = mklbl();
+
+  /*str data*/
+  _pf.RODATA();
+  _pf.ALIGN(); 
+  _pf.LABEL(str_data_lbl);
+  _pf.STR(dynamic_cast<cdk::string_node *>(node->initializer())->value());
+
+  /* reference label*/
+  is_const_type(node->type()) ? _pf.RODATA() : _pf.DATA();
+  _pf.ALIGN();
+  _pf.LABEL(sym->label());
+  _pf.ID(str_data_lbl);
+}
+
+
 void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
 
   //add variable to symbol table
@@ -456,84 +538,23 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
 
   CHECK_TYPES(_compiler, _symtab, node);
 
-  if (node->scp() == scope::IMPORT) {
-    _pf.GLOBAL(symb->label(), _pf.OBJ());
-    return;
+  switch(node->scp()) {
+  case scope::IMPORT:
+    do_variable_import(node, symb);
+    break;
+  case scope::BLOCK:
+    do_variable_block(node, symb);
+    break;
+  case scope::PUBLIC:
+    do_variable_public(node, symb);
+    break;
+  case scope::LOCAL:
+    do_variable_local(node, symb);
+    break;
+  default:
+    assert(false);
   }
 
-  if (node->scp() == scope::BLOCK) {
-    if(node->initializer() == nullptr) {
-      return;
-    }
-    _pf.TEXT();
-    _pf.ALIGN();
-    node->initializer()->accept(this, lvl);
-
-    switch (node->type()->size()) {
-    case 4:
-       _pf.LOCA(symb->offset());
-      break;
-    case 8:
-      _pf.LOCAL(symb->offset());
-      _pf.DSTORE();
-      break; // pato real
-    default:
-      assert(false && "type size not 4 or 8");
-    }
-
-    return;
-  }
-
-  bool is_string_init = (node->initializer() != nullptr) && (dynamic_cast<cdk::string_node *>(node->initializer())) ;
-  auto str_init_lbl = mklbl();
-
-  if (node->scp() == scope::PUBLIC) {
-    _pf.GLOBAL(symb->label(), _pf.OBJ());
-  }
-
-  if (node->initializer() == nullptr) {
-    _pf.BSS();
-    _pf.ALIGN();
-    _pf.LABEL(symb->label());
-    _pf.BYTE(symb->type()->size());
-    return;
-  }
-
-  if (is_const_type(node->type())) {
-    _pf.RODATA();
-  } else {
-    _pf.DATA();
-  }
-  _pf.ALIGN();
-
-  if(is_string_init) {
-    _pf.LABEL(str_init_lbl);
-  } else {
-    _pf.LABEL(symb->label());
-  }
-
-  if (dynamic_cast<cdk::integer_node *>(node->initializer())) {
-    _pf.CONST(dynamic_cast<cdk::integer_node *>(node->initializer())->value());
-  } else if (dynamic_cast<noob_node *>(node->initializer())) {
-    _pf.CONST(0);
-  }else if (dynamic_cast<cdk::double_node *>(node->initializer())) {
-    _pf.DOUBLE(dynamic_cast<cdk::double_node *>(node->initializer())->value());
-  } else if (dynamic_cast<cdk::string_node *>(node->initializer())) {
-    auto lbl = mklbl();
-
-    _pf.RODATA();
-    _pf.ALIGN();
-    _pf.STR(dynamic_cast<cdk::string_node *>(node->initializer())->value());
-
-    if (is_const_type(node->type())) {
-      _pf.RODATA();
-    } else {
-      _pf.DATA();
-    }
-    _pf.ALIGN();
-    _pf.LABEL(symb->label());
-    _pf.ID(str_init_lbl);
-  }
 }
 
 const std::string calculate_function_label(const std::string &s) {

@@ -40,6 +40,14 @@ namespace pwn {
     void do_function_decl(function_decl_node *const node);
     void do_function_decl_symtab(function_decl_node *const node);
 
+    void do_variable_import(variable_node *const node, std::shared_ptr<symbol> sym);
+    void do_variable_block(variable_node *const node, std::shared_ptr<symbol> sym);
+    void do_variable_public(variable_node *const node, std::shared_ptr<symbol> sym);
+    void do_variable_local(variable_node *const node, std::shared_ptr<symbol> sym);
+    void do_variable_local_without_init(variable_node *const node, std::shared_ptr<symbol> sym);
+    void do_variable_local_with_init_string(variable_node *const node, std::shared_ptr<symbol> sym);
+    void do_variable_local_with_init_non_string(variable_node *const node, std::shared_ptr<symbol> sym);
+
 
     ~postfix_writer() {
       os().flush();
