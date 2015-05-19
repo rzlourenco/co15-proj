@@ -43,3 +43,6 @@ examples/
 daily/
 
 *swp
+
+tests-pwn-daily-201504081911/asm/
+tests-pwn-daily-201504081911/exe/
