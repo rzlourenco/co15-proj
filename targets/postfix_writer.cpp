@@ -104,8 +104,10 @@ void pwn::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 // FIXME
 void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
+
   // $ val
-  node->accept(this, lvl);
+  node->argument()->accept(this, lvl);
+
   auto type = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE));
   // $ val sz
   _pf.INT(type->size());
@@ -116,10 +118,6 @@ void pwn::postfix_writer::do_alloc_node(pwn::alloc_node * const node, int lvl) {
   // $ #(val*sz) sp
   _pf.SP();
 
-  //_pf.INT(val)
-  _pf.INT(type->size());
-  _pf.MUL();
-  _pf.ADD();
 }
 
 void pwn::postfix_writer::do_not_node(pwn::not_node * const node, int lvl) {
@@ -354,24 +352,42 @@ void pwn::postfix_writer::do_index_node(pwn::index_node * const node, int lvl) {
 void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
+  size_t lvalue_size = 0;
+  lvalue_node *const lval = node->lvalue();
+  if (dynamic_cast<identifierrr_node *>(lval)) {
+    identifierrr_node *in = dynamic_cast<identifierrr_node *>(lval);
+    lvalue_size = _symtab.find(in->identifier())->type()->size();
+  } else if (dynamic_cast<index_node *>(lval)) {
+    lvalue_size = std::unique_ptr<basic_type>(make_type(basic_type::TYPE_DOUBLE))->size();
+  } else {
+    assert(false);
+  }
+
   auto type = node->rvalue()->type();
+  size_t rvalue_size =  type->size();
 
   node->rvalue()->accept(this, lvl+2);
 
-  switch (type->size()) {
-  case 4:
+  if ( lvalue_size == 4 && rvalue_size == 4) {
     _pf.DUP();
     node->lvalue()->accept(this, lvl+2);
     _pf.STORE();
-    break;
-  case 8:
+  } else if (lvalue_size == 4 && rvalue_size == 8) {
+    _pf.D2I();
+    _pf.DUP();
+     node->lvalue()->accept(this, lvl+2);
+    _pf.STORE(); 
+  } else if (lvalue_size == 8 && rvalue_size == 4) {
+    _pf.I2D();
+    _pf.DDUP();
+     node->lvalue()->accept(this, lvl+2);
+    _pf.DSTORE(); 
+  } else if (lvalue_size == 8 && rvalue_size == 4) {
     _pf.DDUP();
     node->lvalue()->accept(this, lvl+2);
     _pf.DSTORE();
-    break;
-  default:
-    assert(false && "type has size not in {4, 8}");
-    break;
+  } else {
+    assert(false);
   }
 }
 
