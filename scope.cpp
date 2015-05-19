@@ -1,4 +1,5 @@
 #include "scope.h"
+#include <cassert>
 
 std::ostream& operator<<(std::ostream& os, const pwn::scope& scp) {
   switch(scp) {
@@ -13,6 +14,9 @@ std::ostream& operator<<(std::ostream& os, const pwn::scope& scp) {
       break;
     case pwn::scope::BLOCK:
       os << "block";
+      break;
+    case pwn::scope::DEFAULT:
+      assert(false && "should never use an undetermined(DEFAULT) scope");
       break;
     }
   return os;

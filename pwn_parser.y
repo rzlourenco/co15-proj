@@ -118,9 +118,9 @@ params : param             { $$ = new cdk::sequence_node(LINE, $1); }
 param  : type tIDENTIFIER    { $$ = new pwn::variable_node(LINE, pwn::scope::BLOCK, $1, $2, nullptr);}
        ;
 
-local_opt  : tLOCAL       { $$ = pwn::scope::LOCAL; }
-           |              { $$ = pwn::scope::PUBLIC; }
-           ;
+local_opt : tLOCAL       { $$ = pwn::scope::LOCAL; }
+          |              { $$ = pwn::scope::DEFAULT; }
+          ;
 
 type :     raw_type      { $$ = $1;}
      | '<' raw_type '>'  { $$ = pwn::make_const_type($2);}

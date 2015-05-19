@@ -38,6 +38,7 @@ namespace pwn {
 
     void declare_rts_function(const std::string &s);
     void do_function_decl(function_decl_node *const node);
+    void do_function_decl_symtab(function_decl_node *const node);
 
 
     ~postfix_writer() {

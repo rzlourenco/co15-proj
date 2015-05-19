@@ -427,15 +427,42 @@ void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const 
 // ------------------------ Declarations ---------------------------------------
 
 void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int lvl) {
+
+  //add variable to symbol table
+  const std::string &id = node->identifier();
+  std::shared_ptr<symbol> symb = _symtab.find_local(id);
+  if (symb == nullptr) {
+    switch (node->scp()) {
+      case scope::PUBLIC:
+        symb = make_public_variable(node->type(), id, id);
+        break;
+      case scope::LOCAL:
+        symb = make_local_variable(node->type(), id, id);
+        break;
+      case scope::IMPORT:
+        symb = make_import_variable(node->type(), id);
+        break;
+      case scope::BLOCK:
+        _last_var_addr -= node->type()->size();
+        symb = make_block_variable(node->type(), id, _last_var_addr);
+        break;
+      case scope::DEFAULT:
+        assert(false && "undefined scope");
+    }
+    _symtab.insert(id, symb);
+  }
+
   CHECK_TYPES(_compiler, _symtab, node);
 
-  auto symb = _symtab.find(node->identifier());
   if (node->scp() == scope::IMPORT) {
     _pf.GLOBAL(symb->label(), _pf.OBJ());
     return;
   }
 
-  if (node->scp() == scope::BLOCK && node->initializer() != nullptr) {
+  if (node->scp() == scope::BLOCK) {
+    if(node->initializer() != nullptr) {
+      return;
+    }
     _pf.TEXT();
     _pf.ALIGN();
     node->initializer()->accept(this, lvl);
@@ -513,6 +540,30 @@ const std::string calculate_function_label(const std::string &s) {
   }
 }
 
+void pwn::postfix_writer::do_function_decl_symtab(pwn::function_decl_node *const node) {
+  const std::string &id = "." + node->function();
+  auto symb = _symtab.find(id);
+  if( symb != nullptr) {
+    return;
+  } 
+  switch(node->scp()) {
+    case pwn::scope::PUBLIC:
+      // Label must be compatible with C
+      symb = make_public_function(node->return_type(), id, get_argument_types(node), node->function());
+      break;
+    case pwn::scope::LOCAL:
+      symb = make_local_function(node->return_type(), id, get_argument_types(node), id);
+      break;
+    case pwn::scope::IMPORT:
+      symb = make_import_function(node->return_type(), id, get_argument_types(node));
+      break;
+    default:
+      assert(false && "functions must be defined in outer level");
+  }
+
+  _symtab.insert(id, symb);
+}
+
 void pwn::postfix_writer::do_function_decl(pwn::function_decl_node *const node) {
   if(_declared_functions.count(node->function()) > 0) {
     /*already declared*/
@@ -540,13 +591,15 @@ void pwn::postfix_writer::do_function_decl(pwn::function_decl_node *const node) 
 void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   /*start of symtab accouting, type checking and what not*/
 
+  do_function_decl_symtab(node);
+
   CHECK_TYPES(_compiler, _symtab, node);
 
   size_t reserved_bytes = 0;
   {
     auto calc = std::unique_ptr<frame_size_calculator>(new frame_size_calculator(_compiler));
     calc->do_function_def_node(node, lvl);
-    reserved_bytes = calc->get_max_need();
+    reserved_bytes = calc->total_need();
   }
 
   auto symb = _symtab.find("." + node->function());
@@ -565,6 +618,8 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
   if (!is_same_raw_type(node->return_type(), basic_type::TYPE_VOID)) {
     _last_var_addr = -node->return_type()->size();
     _symtab.insert(node->function(), make_block_variable(node->return_type(), node->function(), _last_var_addr));
+  } else {
+    _last_var_addr = 0;
   }
 
   do_function_decl(node);
@@ -605,6 +660,9 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
 }
 
 void pwn::postfix_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
+  
+  do_function_decl_symtab(node);
+
   CHECK_TYPES(_compiler, _symtab, node);
 
   do_function_decl(node);

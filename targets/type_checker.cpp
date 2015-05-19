@@ -367,23 +367,7 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
     }
   }
 
-  switch (node->scp()) {
-  case scope::PUBLIC:
-    symb = make_public_variable(node->type(), id, id);
-    break;
-  case scope::LOCAL:
-    symb = make_local_variable(node->type(), id, id);
-    break;
-  case scope::IMPORT:
-    symb = make_import_variable(node->type(), id);
-    break;
-  case scope::BLOCK:
-    //FIXME: fix offset
-    symb = make_block_variable(node->type(), id, 0);
-    break;
-  }
 
-  _symtab.insert(id, symb);
 }
 
 void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node, int lvl) {
@@ -421,10 +405,6 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
   }
 
   symb->definition(true);
-
-  //FIXME: not sure if this should be here(just here so the xml_writer does everything all right)
-  symb = make_block_variable(node->return_type(), node->function(), -node->return_type()->size());
-  _symtab.insert(node->function(), symb);
 }
 
 void check_parameters_same_name_function(pwn::function_decl_node *const node) {
@@ -454,23 +434,6 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
     if (symb->argument_types() != get_argument_types(node)) {
       throw std::string("function ") + node->function() + " has already been declared with different argument types";
     }
-  } else {
-    switch(node->scp()) {
-    case scope::PUBLIC:
-      // Label must be compatible with C
-      symb = make_public_function(node->return_type(), id, get_argument_types(node), node->function());
-      break;
-    case scope::LOCAL:
-      symb = make_local_function(node->return_type(), id, get_argument_types(node), id);
-      break;
-    case scope::IMPORT:
-      symb = make_import_function(node->return_type(), id, get_argument_types(node));
-      break;
-    default:
-      assert(false && "functions must be defined in outer level");
-    }
-
-    _symtab.insert(id, symb);
   }
 }
 
