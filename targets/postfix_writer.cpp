@@ -462,7 +462,7 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
   }
 
   if (node->scp() == scope::BLOCK) {
-    if(node->initializer() != nullptr) {
+    if(node->initializer() == nullptr) {
       return;
     }
     _pf.TEXT();
@@ -484,9 +484,6 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
     return;
   }
 
-  if (node->scp() == scope::BLOCK) {
-    return;
-  }
 
   if (node->scp() == scope::PUBLIC) {
     _pf.GLOBAL(symb->label(), _pf.OBJ());

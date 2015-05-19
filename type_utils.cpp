@@ -4,7 +4,7 @@
 
 namespace pwn {
   basic_type *make_type(type_t type) {
-    size_t type_size = 0;
+    size_t type_size;
 
     switch (type) {
       case basic_type::TYPE_INT:
@@ -14,6 +14,9 @@ namespace pwn {
         break;
       case basic_type::TYPE_DOUBLE:
         type_size = 8;
+        break;
+      default:
+        type_size = 0;
         break;
     };
 
