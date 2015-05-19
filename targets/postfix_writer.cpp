@@ -450,6 +450,8 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
         assert(false && "undefined scope");
     }
     _symtab.insert(id, symb);
+  }  else {
+    throw std::string("duplicate variable declaration: " + id);
   }
 
   CHECK_TYPES(_compiler, _symtab, node);

@@ -348,12 +348,6 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
     throw std::string("constant declaration must have initializer");
   }
 
-  const std::string &id = node->identifier();
-  auto symb = _symtab.find_local(id);
-  if (symb != nullptr) {
-    throw std::string("duplicate variable declaration: " + id);
-  }
-
   if (node->initializer() != nullptr) {
     auto rnode = is_read_node(node->initializer());
     if (rnode) {
