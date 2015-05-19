@@ -409,6 +409,9 @@ void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const 
   _pf.TRASH(clean_size);
 
   // FIXME
+  if (is_same_raw_type(symb->type(), basic_type::TYPE_VOID))
+    return;
+
   switch (symb->type()->size()) {
   case 4:
     _pf.PUSH();
@@ -522,6 +525,7 @@ void pwn::postfix_writer::do_function_decl(pwn::function_decl_node *const node) 
       _pf.EXTERN(calculate_function_label(node->function()));
       break;
     case scope::LOCAL:
+      break;
     default:
       assert(false && "trying to declare unsupported functions ");
   }
@@ -534,7 +538,6 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
 
   CHECK_TYPES(_compiler, _symtab, node);
 
-  // FIXME: account for return variable if not void
   size_t reserved_bytes = 0;
   {
     auto calc = std::unique_ptr<frame_size_calculator>(new frame_size_calculator(_compiler));
@@ -556,32 +559,41 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
   }
 
   if (!is_same_raw_type(node->return_type(), basic_type::TYPE_VOID)) {
-    /* already checked for in type_checker. delete?
-    if (_symtab.find_local(node->function())) {
-      throw std::string("argument with same name as function");
-    }
-    */
-
     _last_var_addr = -node->return_type()->size();
     _symtab.insert(node->function(), make_block_variable(node->return_type(), node->function(), _last_var_addr));
   }
 
-
-  /*start of asm*/
   do_function_decl(node);
   _endfunction_label = mklbl();
+
   _pf.TEXT();
   _pf.ALIGN();
   const std::string &function_label = calculate_function_label(node->function());
   _pf.LABEL(function_label);
   _pf.ENTER(reserved_bytes);
 
+  if (!is_void(node->default_return()->type()) && node->default_return()) {
+    node->default_return()->accept(this, lvl);
+    _pf.LOCA(_last_var_addr);
+  }
+
   node->body()->accept(this, lvl+2);
 
   _pf.LABEL(_endfunction_label);
-  if(is_double(node->return_type())) { _pf.DPOP();}
-  else if (is_void(node->return_type())) {/*do nothing*/}
-  else {_pf.POP();}
+
+  if (!is_void(node->return_type())) {
+    switch (node->return_type()->size()) {
+    case 8:
+      _pf.DPOP();
+      break;
+    case 4:
+      _pf.POP();
+      break;
+    default:
+      assert(false && "function return not void and size is not 4 or 8");
+    }
+  }
+
   _pf.LEAVE();
   _pf.RET();
 

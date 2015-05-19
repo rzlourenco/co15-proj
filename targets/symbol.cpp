@@ -7,7 +7,7 @@ std::shared_ptr<symbol> make_block_variable(basic_type *type, const std::string 
         scope::BLOCK,
         type,
         name,
-        arglist_t (),
+        arglist_t(),
         false,
         false,
         "",

@@ -87,7 +87,7 @@ namespace pwn {
         const arglist_t &argtypes);
 
   public:
-    virtual ~symbol() { delete _type; }
+    virtual ~symbol() { }
   };
 
   std::shared_ptr<symbol> make_block_variable(

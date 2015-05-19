@@ -386,8 +386,6 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
   _symtab.insert(id, symb);
 }
 
-
-
 void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   if (node->default_return() != nullptr) {
     node->default_return()->accept(this, lvl+2);
@@ -407,27 +405,25 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
     symb = _symtab.find(id);
   }
 
-  if (symb != nullptr) {
-    if (symb->definition()) {
-      throw std::string("more than one definition for function ") + node->function();
-    }
-    if (symb->scope() == scope::IMPORT) {
-      throw std::string("cannot define import function ") + node->function();
-    }
-    if (symb->type()->name() != node->return_type()->name()) {
-      throw std::string("function ") + node->function() + " has already been declared with different return type";
-    }
-    if (symb->argument_types() != get_argument_types(node)) {
-      throw std::string("function ") + node->function() + " has already been declared with different argument types";
-    }
+  assert(symb != nullptr && "couldn't find function in symbol table after declaring it");
 
-    symb->definition(true);
-  } else {
-    assert(false && "couldn't find function in symbol table after declaring it");
+  if (symb->definition()) {
+    throw std::string("more than one definition for function ") + node->function();
+  }
+  if (symb->scope() == scope::IMPORT) {
+    throw std::string("cannot define import function ") + node->function();
+  }
+  if (symb->type()->name() != node->return_type()->name()) {
+    throw std::string("function ") + node->function() + " has already been declared with different return type";
+  }
+  if (symb->argument_types() != get_argument_types(node)) {
+    throw std::string("function ") + node->function() + " has already been declared with different argument types";
   }
 
+  symb->definition(true);
+
   //FIXME: not sure if this should be here(just here so the xml_writer does everything all right)
-  symb = make_block_variable(node->return_type(), node->function(), -8);
+  symb = make_block_variable(node->return_type(), node->function(), -node->return_type()->size());
   _symtab.insert(node->function(), symb);
 }
 
@@ -445,10 +441,9 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
     check_parameters_same_name_function(node);
   }
 
-
   // DAVID: horrible hack
   const std::string &id = "." + node->function();
-  std::shared_ptr<pwn::symbol> symb = _symtab.find(id);
+  auto symb = _symtab.find(id);
   if (symb != nullptr) {
     if (symb->scope() != node->scp()) {
       throw node->function() + std::string(" declared twice with different scopes");
@@ -462,7 +457,8 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
   } else {
     switch(node->scp()) {
     case scope::PUBLIC:
-      symb = make_public_function(node->return_type(), id, get_argument_types(node), id);
+      // Label must be compatible with C
+      symb = make_public_function(node->return_type(), id, get_argument_types(node), node->function());
       break;
     case scope::LOCAL:
       symb = make_local_function(node->return_type(), id, get_argument_types(node), id);
@@ -471,8 +467,9 @@ void pwn::type_checker::do_function_decl_node(pwn::function_decl_node * const no
       symb = make_import_function(node->return_type(), id, get_argument_types(node));
       break;
     default:
-      assert( false && "can't declare block function");
+      assert(false && "functions must be defined in outer level");
     }
+
     _symtab.insert(id, symb);
   }
 }
