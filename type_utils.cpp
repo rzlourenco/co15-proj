@@ -121,5 +121,13 @@ namespace pwn {
     basic_type _t { *type };
     return is_const_type(_t.name());
   }
+
+  bool is_void(type_t type) {
+      return is_same_raw_type(type, basic_type::TYPE_VOID);
+  }
+  bool is_void(const basic_type *type) {
+    basic_type _t { *type };
+    return is_void(_t.name());
+  }
 }
 

@@ -33,13 +33,15 @@ namespace pwn {
     }
 
   public:
+
+    void declare_rts_function(const std::string &s);
     ~postfix_writer() {
       os().flush();
     }
 
   private:
     inline std::string mklbl() {
-      return "#L" + std::to_string(_lbl++);
+      return "L" + std::to_string(_lbl++);
     }
 
     template <typename Func>

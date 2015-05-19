@@ -34,5 +34,8 @@ namespace pwn {
 
   bool is_const_type(type_t type);
   bool is_const_type(const basic_type *type);
+
+  bool is_void(type_t type);
+  bool is_void(const basic_type *type);
 }
 

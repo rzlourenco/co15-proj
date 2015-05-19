@@ -8,6 +8,11 @@
 #include "targets/postfix_writer.h"
 #include "ast/all.h"  // all.h is automatically generated
 
+
+void pwn::postfix_writer::declare_rts_function(const std::string &s) {
+  _pf.EXTERN(s);
+}
+
 //---------------------------------------------------------------------------
 //     THIS IS THE VISITOR'S DEFINITION
 //---------------------------------------------------------------------------
@@ -486,26 +491,20 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
   }
 }
 void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const node, int lvl) {
+  /*start of symtab accouting, type checking and what not*/
+
   CHECK_TYPES(_compiler, _symtab, node);
 
   // FIXME: account for return variable if not void
   size_t reserved_bytes = 0;
   {
     auto calc = std::unique_ptr<frame_size_calculator>(new frame_size_calculator(_compiler));
-    calc->do_function_def_node(node, 0);
+    calc->do_function_def_node(node, lvl);
     reserved_bytes = calc->get_max_need();
   }
 
   auto symb = _symtab.find("." + node->function());
   assert(symb != nullptr);
-
-  _pf.TEXT();
-  _pf.ALIGN();
-  if (node->scp() == scope::PUBLIC) {
-    _pf.GLOBAL(symb->label(), _pf.FUNC());
-  }
-  _pf.LABEL(symb->label());
-  _pf.ENTER(reserved_bytes);
 
   _symtab.push();
   if (node->parameters()) {
@@ -518,13 +517,42 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
   }
 
   if (!is_same_raw_type(node->return_type(), basic_type::TYPE_VOID)) {
+    /* already checked for in type_checker. delete?
     if (_symtab.find_local(node->function())) {
       throw std::string("argument with same name as function");
     }
+    */
 
     _last_var_addr = -node->return_type()->size();
     _symtab.insert(node->function(), make_block_variable(node->return_type(), node->function(), _last_var_addr));
   }
+
+  /*pwn to _main, _main is already ._main*/
+  std::string function_label;
+  if (symb->name() == ".pwn") { function_label = "_main";}
+  else { function_label = symb->label();}
+
+  /*start of asm*/
+
+  _endfunction_label = mklbl();
+  _pf.TEXT();
+  _pf.ALIGN();
+  if (node->scp() == scope::PUBLIC) {
+    _pf.GLOBAL(function_label, _pf.FUNC());
+  }
+  _pf.LABEL(function_label);
+  _pf.ENTER(reserved_bytes);
+
+  node->body()->accept(this, lvl+2);
+
+  _pf.LABEL(_endfunction_label);
+  if(is_double(node->return_type())) { _pf.DPOP();}
+  else if (is_void(node->return_type())) {/*do nothing*/}
+  else {_pf.POP();}
+  _pf.LEAVE();
+  _pf.RET();
+
+  _symtab.pop();
 }
 
 void pwn::postfix_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
@@ -651,12 +679,15 @@ void pwn::postfix_writer::do_print_node(pwn::print_node * const node, int lvl) {
   node->argument()->accept(this, lvl); // determine the value to print
 
   if (is_int(node->argument()->type())) {
+    declare_rts_function("printi");
     _pf.CALL("printi");
     _pf.TRASH(4); // delete the printed value
   } else if (is_string(node->argument()->type())) {
+    declare_rts_function("prints");
     _pf.CALL("prints");
     _pf.TRASH(4); // delete the printed value's address
   } else if (is_double(node->argument()->type())) {
+    declare_rts_function("printd");
     _pf.CALL("printd");
     _pf.TRASH(8); // dele the printed value
   }
@@ -665,6 +696,7 @@ void pwn::postfix_writer::do_print_node(pwn::print_node * const node, int lvl) {
   }
 
   if (node->new_line()) {
+    declare_rts_function("println");
     _pf.CALL("println"); // print a newline
   }
 }
@@ -675,11 +707,13 @@ void pwn::postfix_writer::do_read_node(pwn::read_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
   if (is_int(node->type())) {
+    declare_rts_function("readi");
     _pf.CALL("readi");
     _pf.PUSH();
     return;
   }
   if (is_double(node->type())) {
+    declare_rts_function("readd");
     _pf.CALL("readd");
     _pf.DPUSH();
     return;
@@ -715,5 +749,10 @@ void pwn::postfix_writer::do_if_else_node(cdk::if_else_node * const node, int lv
 
 //---------------------------------------------------------------------------
 void pwn::postfix_writer::do_block_node(pwn::block_node * const node, int lvl) {
+  CHECK_TYPES(_compiler, _symtab, node);
+
   _symtab.push();
+  node->decls()->accept(this, lvl+2);
+  node->stmts()->accept(this, lvl+2);
+  _symtab.pop();
 }
