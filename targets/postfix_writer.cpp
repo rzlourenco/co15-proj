@@ -10,7 +10,12 @@
 
 
 void pwn::postfix_writer::declare_rts_function(const std::string &s) {
-  _pf.EXTERN(s);
+  if(_declared_functions.count(s) == 0) { 
+    _pf.TEXT();
+    _pf.ALIGN(); 
+    _pf.EXTERN(s);
+    _declared_functions.insert(s);
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -490,6 +495,40 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
     _pf.ID(lbl);
   }
 }
+
+const std::string calculate_function_label(const std::string &s) {
+  if (s == "pwn") {
+    return std::string("_main");
+  } else if (s == "_main") {
+    return std::string("._main");
+  } else {
+    return s;
+  }
+}
+
+void pwn::postfix_writer::do_function_decl(pwn::function_decl_node *const node) {
+  if(_declared_functions.count(node->function()) > 0) {
+    /*already declared*/
+    return;
+  }
+
+  _pf.TEXT();
+  _pf.ALIGN(); 
+  switch(node->scp()) {
+    case scope::PUBLIC:
+      _pf.GLOBAL(calculate_function_label(node->function()), _pf.FUNC()); 
+      break;
+    case scope::IMPORT:
+      _pf.EXTERN(calculate_function_label(node->function()));
+      break;
+    case scope::LOCAL:
+    default:
+      assert(false && "trying to declare unsupported functions ");
+  }
+
+  _declared_functions.insert(node->function());
+}
+
 void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const node, int lvl) {
   /*start of symtab accouting, type checking and what not*/
 
@@ -527,19 +566,13 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
     _symtab.insert(node->function(), make_block_variable(node->return_type(), node->function(), _last_var_addr));
   }
 
-  /*pwn to _main, _main is already ._main*/
-  std::string function_label;
-  if (symb->name() == ".pwn") { function_label = "_main";}
-  else { function_label = symb->label();}
 
   /*start of asm*/
-
+  do_function_decl(node);
   _endfunction_label = mklbl();
   _pf.TEXT();
   _pf.ALIGN();
-  if (node->scp() == scope::PUBLIC) {
-    _pf.GLOBAL(function_label, _pf.FUNC());
-  }
+  const std::string &function_label = calculate_function_label(node->function());
   _pf.LABEL(function_label);
   _pf.ENTER(reserved_bytes);
 
@@ -558,10 +591,7 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
 void pwn::postfix_writer::do_function_decl_node(pwn::function_decl_node * const node, int lvl) {
   CHECK_TYPES(_compiler, _symtab, node);
 
-  // FIXME
-  _pf.TEXT();
-  _pf.ALIGN();
-  _pf.GLOBAL(node->function(), _pf.FUNC());
+  do_function_decl(node);
 }
 
 void pwn::postfix_writer::do_repeat_node(pwn::repeat_node * const node, int lvl) {

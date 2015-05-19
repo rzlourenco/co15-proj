@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <string>
+#include <set>
 #include <iostream>
 #include <cdk/ast/binary_expression_node.h>
 #include <cdk/symbol_table.h>
@@ -23,6 +24,7 @@ namespace pwn {
     std::vector<std::string> _endrepeat_labels;
     std::vector<std::string> _increment_labels;
     std::string _endfunction_label;
+    std::set<std::string> _declared_functions;
     size_t _lbl;
     ptrdiff_t _last_var_addr;
 
@@ -35,6 +37,9 @@ namespace pwn {
   public:
 
     void declare_rts_function(const std::string &s);
+    void do_function_decl(function_decl_node *const node);
+
+
     ~postfix_writer() {
       os().flush();
     }
