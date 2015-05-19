@@ -572,7 +572,7 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
   _pf.LABEL(function_label);
   _pf.ENTER(reserved_bytes);
 
-  if (!is_void(node->default_return()->type()) && node->default_return()) {
+  if (node->default_return() && !is_void(node->default_return()->type())) {
     node->default_return()->accept(this, lvl);
     _pf.LOCA(_last_var_addr);
   }

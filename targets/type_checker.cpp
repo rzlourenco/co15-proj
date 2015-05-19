@@ -1,4 +1,4 @@
-// $Id: type_checker.cpp,v 1.6 2015/05/18 08:46:25 ist176133 Exp $ -*- c++ -*-
+// $Id: type_checker.cpp,v 1.7 2015/05/19 09:20:48 ist176133 Exp $ -*- c++ -*-
 #include <algorithm>
 #include <string>
 #include <cassert>
