@@ -11,8 +11,10 @@ namespace pwn {
       case basic_type::TYPE_POINTER:
       case basic_type::TYPE_STRING:
         type_size = 4;
+        break;
       case basic_type::TYPE_DOUBLE:
         type_size = 8;
+        break;
     };
 
     return new basic_type(type_size, type);

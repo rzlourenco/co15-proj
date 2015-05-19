@@ -13,8 +13,7 @@ for src in *.pwn; do
     ld -m elf_i386 -L"$HOME/compiladores/root/usr/lib" "$ofile" -lrts -o "exe/$bname" || continue
     
     "exe/$bname" > "actual/$bname.out" || continue
-    diff --ignore-all-space "expected/$bname.out" "actual/$bname.out" 1>/dev/null || continue
-    echo "$bname did not pass the tests"
+    diff --ignore-all-space "expected/$bname.out" "actual/$bname.out" 1>/dev/null || echo "$bname did not pass the tests"
 done
 
 rm -r .o
