@@ -8,12 +8,12 @@ for src in *.pwn; do
     ofile=".o/$bname.o"
 
     echo "Compiling $bname"
-    ../pwn -g "$src" -o "$asmfile"
-    yasm -felf32 "$asmfile" -o "$ofile" || continue;
-    ld -m elf_i386 -L"$HOME/compiladores/root/usr/lib" "$ofile" -lrts -o "exe/$bname" || continue;
+    ../pwn -g "$src" -o "$asmfile" || continue
+    yasm -gdwarf2 -felf32 "$asmfile" -o "$ofile" || continue
+    ld -m elf_i386 -L"$HOME/compiladores/root/usr/lib" "$ofile" -lrts -o "exe/$bname" || continue
     
-    "exe/$bname" > "actual/$bname.out" || continue;
-    diff --ignore-all-space "expected/$bname.out" "actual/$bname.out" 1>/dev/null && continue;
+    "exe/$bname" > "actual/$bname.out" || continue
+    diff --ignore-all-space "expected/$bname.out" "actual/$bname.out" 1>/dev/null || continue
     echo "$bname did not pass the tests"
 done
 

@@ -2,7 +2,6 @@
 
 #include "default_scope_visitor.h"
 #include "ast/all.h"
-#include <iostream>
 
 void pwn::default_scope_visitor::do_sequence_node(cdk::sequence_node * const node, int lvl) {
   if (phase == DONE) return;
