@@ -24,6 +24,10 @@ namespace pwn {
         cdk::expression_node *default_return() {
             return _default_return;
         }
+        
+        void default_return(cdk::expression_node *def_ret) {
+          _default_return = def_ret;
+        }
 
         cdk::basic_node *body() {
             return _body;

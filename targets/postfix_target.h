@@ -9,6 +9,7 @@
 #include <cdk/emitters/postfix_ix86_emitter.h>
 #include "targets/default_scope_visitor.h"
 #include "targets/duplicate_definition_visitor.h"
+#include "targets/default_return_replace.h"
 #include "targets/postfix_writer.h"
 #include "targets/symbol.h"
 
@@ -35,6 +36,9 @@ namespace pwn {
       // weed out duplicate definitions
       duplicate_definition_visitor ddv(compiler);
       compiler->ast()->accept(&ddv, 0);
+
+      default_return_replace drr(compiler);
+      compiler->ast()->accept(&drr, 0);
 
       // this is the backend postfix machine
       cdk::postfix_ix86_emitter pf(compiler);
