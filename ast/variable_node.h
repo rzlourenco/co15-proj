@@ -27,16 +27,22 @@ namespace pwn {
     }
 
   public:
-    inline scope scp() const {
-      return _scope;
+    scope scp() const {
+        return _scope;
     }
-    inline basic_type *type() const {
+    void scp(scope newscope) {
+        _scope = newscope;
+    }
+
+    basic_type *type() const {
       return _type;
     }
-    inline const std::string &identifier() const {
+
+    const std::string &identifier() const {
       return _identifier;
     }
-    inline cdk::expression_node *initializer() const {
+
+    cdk::expression_node *initializer() const {
       return _initializer;
     }
 

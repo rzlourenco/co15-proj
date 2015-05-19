@@ -4,6 +4,7 @@
 
 #include <cdk/basic_target.h>
 #include <cdk/compiler.h>
+#include "targets/default_scope_visitor.h"
 #include "targets/xml_writer.h"
 
 namespace pwn {
@@ -21,6 +22,9 @@ namespace pwn {
       // this symbol table will be used to check identifiers
       // an exception will be thrown if identifiers are used before declaration
       cdk::symbol_table<pwn::symbol> symtab;
+
+      default_scope_visitor dsv(compiler);
+      compiler->ast()->accept(&dsv, 0);
 
       xml_writer writer(compiler, symtab);
       compiler->ast()->accept(&writer, 0);

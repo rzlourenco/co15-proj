@@ -16,8 +16,9 @@ std::ostream& operator<<(std::ostream& os, const pwn::scope& scp) {
       os << "block";
       break;
     case pwn::scope::DEFAULT:
-      assert(false && "should never use an undetermined(DEFAULT) scope");
-      break;
+      assert(false && "should never use an undetermined (DEFAULT) scope");
+    default:
+      assert(false);
     }
   return os;
 }

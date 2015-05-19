@@ -25,8 +25,11 @@ namespace pwn {
             , _parameters(parameters)
             , _scope(scp) { }
 
-        scope scp() {
+        scope scp() const {
             return _scope;
+        }
+        void scp(scope newscope) {
+            _scope = newscope;
         }
 
         basic_type *return_type() {
