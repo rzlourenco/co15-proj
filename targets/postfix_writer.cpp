@@ -393,7 +393,7 @@ void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const 
     throw "argument list differs in size from previously declared function " + node->function();
   }
 
-  for (size_t ix = 0; ix < argtypes.size(); ++ix) {
+  for (ptrdiff_t ix = argtypes.size() - 1; ix >= 0; --ix) {
     auto arg = dynamic_cast<cdk::expression_node *>(args[ix]);
     assert(arg != nullptr && "syntax is allowing non-expression nodes in function call");
 
@@ -484,6 +484,8 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
     return;
   }
 
+  bool is_string_init = (node->initializer() != nullptr) && (dynamic_cast<cdk::string_node *>(node->initializer())) ;
+  auto str_init_lbl = mklbl();
 
   if (node->scp() == scope::PUBLIC) {
     _pf.GLOBAL(symb->label(), _pf.OBJ());
@@ -503,7 +505,12 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
     _pf.DATA();
   }
   _pf.ALIGN();
-  _pf.LABEL(symb->label());
+
+  if(is_string_init) {
+    _pf.LABEL(str_init_lbl);
+  } else {
+    _pf.LABEL(symb->label());
+  }
 
   if (dynamic_cast<cdk::integer_node *>(node->initializer())) {
     _pf.CONST(dynamic_cast<cdk::integer_node *>(node->initializer())->value());
@@ -516,7 +523,6 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
 
     _pf.RODATA();
     _pf.ALIGN();
-    _pf.LABEL(lbl);
     _pf.STR(dynamic_cast<cdk::string_node *>(node->initializer())->value());
 
     if (is_const_type(node->type())) {
@@ -525,7 +531,8 @@ void pwn::postfix_writer::do_variable_node(pwn::variable_node * const node, int 
       _pf.DATA();
     }
     _pf.ALIGN();
-    _pf.ID(lbl);
+    _pf.LABEL(symb->label());
+    _pf.ID(str_init_lbl);
   }
 }
 
