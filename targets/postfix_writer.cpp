@@ -603,6 +603,7 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
     calc->do_function_def_node(node, lvl);
     reserved_bytes = calc->total_need();
   }
+  reserved_bytes += (node->return_type() == nullptr ? 0 : node->return_type()->size());
 
   auto symb = _symtab.find("." + node->function());
   assert(symb != nullptr);
@@ -645,9 +646,11 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
   if (!is_void(node->return_type())) {
     switch (node->return_type()->size()) {
     case 8:
+      _pf.LOCV(-node->return_type()->size());
       _pf.DPOP();
       break;
     case 4:
+      _pf.LOCV(-node->return_type()->size());
       _pf.POP();
       break;
     default:
