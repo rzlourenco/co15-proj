@@ -1,5 +1,5 @@
 // -*- vim: sw=2 sts=2 ts=2 expandtab ft=cpp
-// $Id: postfix_writer.cpp,v 1.10 2015/05/20 09:03:49 ist176133 Exp $ -*- c++ -*-
+// $Id: postfix_writer.cpp,v 1.12 2015/05/20 10:08:49 ist176133 Exp $ -*- c++ -*-
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -378,12 +378,12 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
     _pf.D2I();
     _pf.DUP();
      node->lvalue()->accept(this, lvl+2);
-    _pf.STORE(); 
+    _pf.STORE();
   } else if (lvalue_size == 8 && rvalue_size == 4) {
     _pf.I2D();
     _pf.DDUP();
      node->lvalue()->accept(this, lvl+2);
-    _pf.DSTORE(); 
+    _pf.DSTORE();
   } else if (lvalue_size == 8 && rvalue_size == 8) {
     _pf.DDUP();
     node->lvalue()->accept(this, lvl+2);
@@ -514,7 +514,7 @@ void pwn::postfix_writer::do_variable_local_with_init_non_string(pwn::variable_n
   } else {
     assert(false && "unknown initializer type");
   }
-  
+
 }
 
 void pwn::postfix_writer::do_variable_local_with_init_string(pwn::variable_node *const node, std::shared_ptr<symbol> sym) {
@@ -522,7 +522,7 @@ void pwn::postfix_writer::do_variable_local_with_init_string(pwn::variable_node 
 
   /*str data*/
   _pf.RODATA();
-  _pf.ALIGN(); 
+  _pf.ALIGN();
   _pf.LABEL(str_data_lbl);
   _pf.STR(dynamic_cast<cdk::string_node *>(node->initializer())->value());
 
@@ -687,7 +687,18 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
 
   if (node->default_return() && !is_void(node->default_return()->type())) {
     node->default_return()->accept(this, lvl);
-    _pf.LOCA(_last_var_addr);
+    switch (node->default_return()->type()->size()) {
+    case 4:
+      _pf.LOCA(_last_var_addr);
+      break;
+    case 8:
+      _pf.LOCAL(_last_var_addr);
+      _pf.DSTORE();
+      break;
+    default:
+      assert(false && "default return type size is not 4 or 8");
+    }
+
   }
 
   node->body()->accept(this, lvl+2);

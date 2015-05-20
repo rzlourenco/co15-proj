@@ -11,7 +11,7 @@ EXES   := $(SRCS:%.pwn=$(OUTDIR)/%)
 all: | $(TMPDIR)/.dummy $(OUTDIR)/.dummy $(EXES)
 
 $(TMPDIR)/%.asm: %.pwn
-	$(PWN) $< -o $(ASMDIR)$(patsubst pwn,asm,$@)
+	$(PWN) -g $< -o $(ASMDIR)$(patsubst pwn,asm,$@)
 
 $(TMPDIR)/%.o: $(TMPDIR)/%.asm
 	$(YASM) -felf32 -gdwarf2 $< -o $@
@@ -27,6 +27,6 @@ $(OUTDIR)/.dummy:
 	@mkdir -p $(OUTDIR)
 	@touch $@
 
+.PHONY: clean
 clean:
-	rm -rf $(TMPDIR) $(OUTDIR)
 
