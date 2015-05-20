@@ -1,4 +1,4 @@
-// $Id: postfix_target.h,v 1.2 2015/05/19 19:07:55 ist176133 Exp $
+// $Id: postfix_target.h,v 1.4 2015/05/19 23:59:22 ist176133 Exp $
 #ifndef __PWN_SEMANTICS_PFEVALUATOR_H__
 #define __PWN_SEMANTICS_PFEVALUATOR_H__
 
@@ -29,6 +29,9 @@ namespace pwn {
       // during code generation
       cdk::symbol_table<pwn::symbol> symtab;
 
+      // this is the backend postfix machine
+      cdk::postfix_ix86_emitter pf(compiler);
+
       // preprocess default scopes
       default_scope_visitor dcv(compiler);
       compiler->ast()->accept(&dcv, 0);      
@@ -39,9 +42,6 @@ namespace pwn {
 
       default_return_replace drr(compiler);
       compiler->ast()->accept(&drr, 0);
-
-      // this is the backend postfix machine
-      cdk::postfix_ix86_emitter pf(compiler);
 
       // generate assembly code from the syntax tree
       postfix_writer writer(compiler, symtab, pf);

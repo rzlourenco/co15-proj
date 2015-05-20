@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2015/04/08 10:23:35 ist176133 Exp $
+# $Id: Makefile,v 1.7 2015/05/19 23:59:22 ist176133 Exp $
 #---------------------------------------------------------------
 #             CONFIGURE THESE VARIABLES IF NEEDED
 #---------------------------------------------------------------
@@ -16,7 +16,7 @@ Y_NAME=pwn_parser
 
 LFLAGS   = 
 YFLAGS   = -dtvP
-CXXFLAGS = -std=c++11 -DYYDEBUG=1 -Wall -ggdb -Itargets -I. -I$(CDK_INC_DIR) -I$(CDK_INC_DIR)/cdk
+CXXFLAGS = -std=c++11 -DYYDEBUG=1 -Wall -ggdb -Itargets -I. -I$(CDK_INC_DIR) -I$(CDK_INC_DIR)/cdk -I/usr/include -I/usr/include/cdk
 #CXXFLAGS = -std=c++11 -DYYDEBUG=1 -Wall -O3 -ggdb -Itargets -I. -I$(CDK_INC_DIR) -I$(CDK_INC_DIR)/cdk
 LDFLAGS  = -L$(CDK_LIB_DIR) -lcdk
 COMPILER = pwn

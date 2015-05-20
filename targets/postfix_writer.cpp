@@ -1,5 +1,5 @@
 // -*- vim: sw=2 sts=2 ts=2 expandtab ft=cpp
-// $Id: postfix_writer.cpp,v 1.8 2015/05/19 19:07:56 ist176133 Exp $ -*- c++ -*-
+// $Id: postfix_writer.cpp,v 1.9 2015/05/19 23:34:49 ist176133 Exp $ -*- c++ -*-
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -316,6 +316,7 @@ void pwn::postfix_writer::do_or_node(pwn::or_node * const node, int lvl) {
   auto lbl = mklbl();
 
   node->left()->accept(this, lvl+2);
+  _pf.DUP();
   _pf.JNZ(lbl);
   _pf.TRASH(node->type()->size());
   node->right()->accept(this, lvl+2);
@@ -328,6 +329,7 @@ void pwn::postfix_writer::do_and_node(pwn::and_node * const node, int lvl) {
   auto lbl = mklbl();
 
   node->left()->accept(this, lvl+2);
+  _pf.DUP();
   _pf.JZ(lbl);
   _pf.TRASH(node->type()->size());
   node->right()->accept(this, lvl+2);
