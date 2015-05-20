@@ -1,5 +1,5 @@
 // -*- vim: sw=2 sts=2 ts=2 expandtab ft=cpp
-// $Id: postfix_writer.cpp,v 1.9 2015/05/19 23:34:49 ist176133 Exp $ -*- c++ -*-
+// $Id: postfix_writer.cpp,v 1.10 2015/05/20 09:03:49 ist176133 Exp $ -*- c++ -*-
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -384,7 +384,7 @@ void pwn::postfix_writer::do_assignment_node(pwn::assignment_node * const node, 
     _pf.DDUP();
      node->lvalue()->accept(this, lvl+2);
     _pf.DSTORE(); 
-  } else if (lvalue_size == 8 && rvalue_size == 4) {
+  } else if (lvalue_size == 8 && rvalue_size == 8) {
     _pf.DDUP();
     node->lvalue()->accept(this, lvl+2);
     _pf.DSTORE();
@@ -653,6 +653,7 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
     auto calc = std::unique_ptr<frame_size_calculator>(new frame_size_calculator(_compiler));
     calc->do_function_def_node(node, lvl);
     reserved_bytes = calc->total_need();
+    std::cout << "LORD OF THIS WOOOOOOOOOOOORLD: " << reserved_bytes << std::endl;
   }
   reserved_bytes += (node->return_type() == nullptr ? 0 : node->return_type()->size());
 
