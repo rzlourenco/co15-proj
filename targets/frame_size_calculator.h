@@ -14,11 +14,14 @@ class frame_size_calculator: public basic_ast_visitor {
 	public:
 		frame_size_calculator(std::shared_ptr<cdk::compiler> compiler) : basic_ast_visitor(compiler) {}
 
-  	void do_function_def_node(pwn::function_def_node * const node, int lvl);
-  	void do_block_node(pwn::block_node * const node, int lvl);
-  	void do_variable_node(pwn::variable_node * const node, int lvl);
-  	void do_sequence_node(cdk::sequence_node * const node, int lvl);
-  	size_t total_need() const;
+		void do_function_def_node(pwn::function_def_node * const node, int lvl);
+		void do_block_node(pwn::block_node * const node, int lvl);
+		void do_variable_node(pwn::variable_node * const node, int lvl);
+		void do_sequence_node(cdk::sequence_node * const node, int lvl);
+		void do_repeat_node(pwn::repeat_node * const node, int lvl);
+		void do_if_node(cdk::if_node * const node, int lvl);
+		void do_if_else_node(cdk::if_else_node * const node, int lvl);
+		size_t total_need() const;
 
 	public:
 		void do_function_decl_node(pwn::function_decl_node * const node, int lvl) { }
@@ -42,8 +45,6 @@ class frame_size_calculator: public basic_ast_visitor {
 		void do_ne_node(cdk::ne_node * const node, int lvl) { }
 		void do_eq_node(cdk::eq_node * const node, int lvl) { }
 		void do_while_node(cdk::while_node * const node, int lvl) { }
-		void do_if_node(cdk::if_node * const node, int lvl) { }
-		void do_if_else_node(cdk::if_else_node * const node, int lvl) { }
 		void do_noob_node(pwn::noob_node * const node, int lvl) { }
 		void do_identifier_node(pwn::identifierrr_node * const node, int lvl) { }
 		void do_read_node(pwn::read_node * const node, int lvl) { }
@@ -58,7 +59,6 @@ class frame_size_calculator: public basic_ast_visitor {
 		void do_index_node(pwn::index_node * const node, int lvl) { }
 		void do_function_call_node(pwn::function_call_node * const node, int lvl) { }
 		void do_rvalue_node(pwn::rvalue_node * const node, int lvl) { }
-		void do_repeat_node(pwn::repeat_node * const node, int lvl) { }
 		void do_return_node(pwn::return_node * const node, int lvl) { }
 		void do_next_node(pwn::next_node * const node, int lvl) { }
 		void do_stop_node(pwn::stop_node * const node, int lvl) { }
