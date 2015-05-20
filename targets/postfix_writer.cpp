@@ -653,7 +653,6 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
     auto calc = std::unique_ptr<frame_size_calculator>(new frame_size_calculator(_compiler));
     calc->do_function_def_node(node, lvl);
     reserved_bytes = calc->total_need();
-    std::cout << "LORD OF THIS WOOOOOOOOOOOORLD: " << reserved_bytes << std::endl;
   }
   reserved_bytes += (node->return_type() == nullptr ? 0 : node->return_type()->size());
 
