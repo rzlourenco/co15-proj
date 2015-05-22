@@ -1,5 +1,5 @@
 // -*- vim: sw=2 sts=2 ts=2 expandtab ft=cpp
-// $Id: postfix_writer.cpp,v 1.12 2015/05/20 10:08:49 ist176133 Exp $ -*- c++ -*-
+// $Id: postfix_writer.cpp,v 1.13 2015/05/20 10:51:46 ist176133 Exp $ -*- c++ -*-
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -223,6 +223,7 @@ void pwn::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
     is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
 
     _pf.DSUB();
+    return;
   }
 
   if (is_pointer(node->type())) {
@@ -274,6 +275,7 @@ void pwn::postfix_writer::do_div_node(cdk::div_node * const node, int lvl) {
     is_int(node->right()->type()) ? (_pf.I2D(), 0) : 0;
 
     _pf.DDIV();
+    return;
   }
 
   assert(is_int(node->type()) && "div node is neither int nor double");
@@ -423,12 +425,15 @@ void pwn::postfix_writer::do_function_call_node(pwn::function_call_node * const 
     auto arg = dynamic_cast<cdk::expression_node *>(args[ix]);
     assert(arg != nullptr && "syntax is allowing non-expression nodes in function call");
 
-    if (!is_same_raw_type(argtypes[ix], arg->type())) {
+    clean_size += arg->type()->size();
+
+    arg->accept(this, lvl);
+    if (is_int(arg->type()) && is_double(argtypes[ix])) {
+      clean_size += 4;
+      _pf.I2D();
+    } else if (!is_same_raw_type(argtypes[ix], arg->type())) {
       throw "argument " + std::to_string(ix + 1) + " differs in function call to " + node->function();
     }
-
-    clean_size += arg->type()->size();
-    arg->accept(this, lvl);
   }
 
   _pf.CALL(node->function());
@@ -506,7 +511,10 @@ void pwn::postfix_writer::do_variable_local_with_init_non_string(pwn::variable_n
   _pf.ALIGN();
   _pf.LABEL(sym->label());
   if (dynamic_cast<cdk::integer_node *>(node->initializer())) {
-    _pf.CONST(dynamic_cast<cdk::integer_node *>(node->initializer())->value());
+    if (is_double(node->type()))
+      _pf.DOUBLE(dynamic_cast<cdk::integer_node *>(node->initializer())->value());
+    else
+      _pf.CONST(dynamic_cast<cdk::integer_node *>(node->initializer())->value());
   } else if (dynamic_cast<noob_node *>(node->initializer())) {
     _pf.CONST(0);
   }else if (dynamic_cast<cdk::double_node *>(node->initializer())) {
@@ -687,7 +695,11 @@ void pwn::postfix_writer::do_function_def_node(pwn::function_def_node * const no
 
   if (node->default_return() && !is_void(node->default_return()->type())) {
     node->default_return()->accept(this, lvl);
-    switch (node->default_return()->type()->size()) {
+
+    if (is_double(node->return_type()) && is_int(node->default_return()->type()))
+      _pf.I2D();
+
+    switch (node->return_type()->size()) {
     case 4:
       _pf.LOCA(_last_var_addr);
       break;
