@@ -60,8 +60,8 @@ D			[0-9]
 {INT}			yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
 0[xX]{H}+		yylval.i = strtol(yytext, nullptr, 16); return tINTEGER;
 
-({D}+\.{D}*|{D}*\.{D}+)(e[-+]?{D}+)?	yylval.d = strtod(yytext, nullptr); return tDOUBLE; /* for .1e2 or 3.e4 or 5.06e7 */
-{D}+e[-+]?{D} 				yylval.d = strtod(yytext, nullptr); return tDOUBLE; /* for 1e2, for example*/
+({D}+\.{D}*|{D}*\.{D}+)([eE][-+]?{D}+)?	yylval.d = strtod(yytext, nullptr); return tDOUBLE; /* for .1e2 or 3.e4 or 5.06e7 */
+[-+]?{D}+[eE][-+]?{D} 				yylval.d = strtod(yytext, nullptr); return tDOUBLE; /* for 1e2, for example*/
 
 [-()<>=+*/%;{}!@,~&|?\[\]$#]     return *yytext;
 

@@ -339,9 +339,14 @@ void pwn::type_checker::do_function_call_node(pwn::function_call_node * const no
           }
     }
 
-    if (symb->argument_types() != get_argument_types(node)) {
-      throw std::string("function call arguments mismatch");
-    }
+    auto paramtypes = get_argument_types(node);
+    if (paramtypes.size() != symb->argument_types().size())
+        throw std::string("argument number differs");
+    
+    for (size_t i = 0; i < paramtypes.size(); ++i)
+      if (!(is_int(paramtypes[i]) && is_double(symb->argument_types()[i])) 
+          && !is_same_raw_type(paramtypes[i], symb->argument_types()[i]))
+        throw std::string("function call arguments mismatch");
   } else if (symb->argument_types().size() > 0) {
     throw std::string("function call with too few parameters. Given 0");
 
@@ -365,7 +370,8 @@ void pwn::type_checker::do_variable_node(pwn::variable_node * const node, int lv
       node->initializer()->accept(this, lvl+2);
     }
 
-    if (!is_same_raw_type(node->initializer()->type(), node->type())) {
+    if (!is_same_raw_type(node->initializer()->type(), node->type()) &&
+        !(is_int(node->initializer()->type()) && is_double(node->type()))) {
       throw std::string("Variable initializer must have the same type as the variable!");
     }
   }
@@ -378,7 +384,8 @@ void pwn::type_checker::do_function_def_node(pwn::function_def_node * const node
     node->default_return()->accept(this, lvl+2);
 
     //TODO: raw_type comparison is probably right because the integer literal has type int but return could be <#>
-    if (!pwn::is_same_raw_type(node->default_return()->type(), node->return_type())) {
+    if (!is_same_raw_type(node->default_return()->type(), node->return_type()) &&
+        !(is_double(node->return_type()) && is_int(node->default_return()->type()))) {
       throw std::string("function default return must have same type as return");
     }
   }
